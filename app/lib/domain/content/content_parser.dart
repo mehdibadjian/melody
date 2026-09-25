@@ -32,6 +32,12 @@ class ContentParser {
           'lessons must be a non-empty list');
     }
     final lessons = lessonsJson.map(_parseLesson).toList();
+    final lessonIds = lessons.map((l) => l.id).toList();
+    final duplicateLessonId = _firstDuplicate(lessonIds);
+    if (duplicateLessonId != null) {
+      throw ContentValidationException(
+          'duplicate lesson id: $duplicateLessonId');
+    }
     return ContentDocument(
         schemaVersion: schemaVersion as int, lessons: lessons);
   }
@@ -48,11 +54,16 @@ class ContentParser {
     if (levelsJson is! List || levelsJson.isEmpty) {
       throw const ContentValidationException('levels must be a non-empty list');
     }
+    final levels = levelsJson.map(_parseLevel).toList();
+    final duplicateLevelId = _firstDuplicate(levels.map((l) => l.id));
+    if (duplicateLevelId != null) {
+      throw ContentValidationException('duplicate level id: $duplicateLevelId');
+    }
     return Lesson(
       id: _requiredString(raw, 'id'),
       title: _requiredString(raw, 'title'),
       difficulty: Difficulty.values.byName(difficulty as String),
-      levels: levelsJson.map(_parseLevel).toList(),
+      levels: levels,
     );
   }
 
@@ -69,6 +80,13 @@ class ContentParser {
       throw const ContentValidationException(
         'requiredNotes must be a non-empty list',
       );
+    }
+    for (final note in requiredNotes) {
+      if (note is! String || note.isEmpty) {
+        throw const ContentValidationException(
+          'requiredNotes entries must be non-empty strings',
+        );
+      }
     }
     final tempo = raw['tempoBpm'];
     if (tempo is! int || tempo < minTempoBpm || tempo > maxTempoBpm) {
@@ -128,6 +146,14 @@ class ContentParser {
       throw ContentValidationException('$key must be a non-empty string');
     }
     return value;
+  }
+
+  static String? _firstDuplicate(Iterable<String> ids) {
+    final seen = <String>{};
+    for (final id in ids) {
+      if (!seen.add(id)) return id;
+    }
+    return null;
   }
 }
 

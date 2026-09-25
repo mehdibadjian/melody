@@ -77,6 +77,25 @@ void main() {
   });
 
   group('LessonSession evaluation (correctness out)', () {
+    test('first note is never a timing miss (no previous-note baseline)', () {
+      final instrument = KeyboardInstrument();
+      final session = instrument.startSession(['C4', 'D4']);
+      session.submit(const NoteEvent(note: 'C4', timestampMs: 9000));
+      expect(session.hits, 1);
+    });
+
+    test('normal beat spacing between notes is not a timing miss', () {
+      final instrument = KeyboardInstrument(tempoBpm: 60);
+      final session = instrument.startSession(['C4', 'D4', 'E4']);
+      // Beats 1s apart at 60bpm; per-note tolerance is 500ms, so gap-based
+      // timing checks would wrongly fail every note after the first.
+      session.submit(const NoteEvent(note: 'C4', timestampMs: 1000));
+      session.submit(const NoteEvent(note: 'D4', timestampMs: 2000));
+      session.submit(const NoteEvent(note: 'E4', timestampMs: 3000));
+      expect(session.hits, 3);
+      expect(session.accuracy, 1.0);
+    });
+
     test('computes accuracy across a sequence of note events', () {
       final instrument = KeyboardInstrument();
       final session = instrument.startSession(['C4', 'D4', 'E4', 'F4']);

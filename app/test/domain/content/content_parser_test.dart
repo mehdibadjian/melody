@@ -64,6 +64,53 @@ void main() {
         throwsA(isA<ContentValidationException>()),
       );
     });
+
+    test('rejects duplicate lesson ids within a document', () {
+      expect(
+        () => ContentParser.parseDocument(lessonJsonDuplicateLessonId),
+        throwsA(
+          isA<ContentValidationException>().having(
+            (e) => e.message,
+            'message',
+            contains('duplicate lesson id'),
+          ),
+        ),
+      );
+    });
+
+    test('rejects duplicate level ids within a lesson', () {
+      expect(
+        () => ContentParser.parseDocument(lessonJsonDuplicateLevelId),
+        throwsA(
+          isA<ContentValidationException>().having(
+            (e) => e.message,
+            'message',
+            contains('duplicate level id'),
+          ),
+        ),
+      );
+    });
+
+    test('rejects non-string requiredNotes entries with a validation error',
+        () {
+      expect(
+        () => ContentParser.parseDocument(lessonJsonNonStringNote),
+        throwsA(
+          isA<ContentValidationException>().having(
+            (e) => e.message,
+            'message',
+            contains('requiredNotes entries must be non-empty strings'),
+          ),
+        ),
+      );
+    });
+
+    test('rejects empty-string requiredNotes entries', () {
+      expect(
+        () => ContentParser.parseDocument(lessonJsonEmptyStringNote),
+        throwsA(isA<ContentValidationException>()),
+      );
+    });
   });
 }
 
@@ -100,6 +147,127 @@ const lessonJson = '''
           "tempoBpm": 100,
           "successThreshold": { "minAccuracy": 0.85, "minNotesHit": 1 },
           "rewardPayout": { "stars": 8, "noteCurrency": 12 }
+        }
+      ]
+    }
+  ]
+}
+''';
+
+const lessonJsonDuplicateLessonId = '''
+{
+  "schemaVersion": 1,
+  "lessons": [
+    {
+      "id": "lesson-001",
+      "title": "First",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "level-001-a",
+          "name": "A",
+          "type": "standard",
+          "requiredNotes": ["C4"],
+          "tempoBpm": 80,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 1 },
+          "rewardPayout": { "stars": 1, "noteCurrency": 1 }
+        }
+      ]
+    },
+    {
+      "id": "lesson-001",
+      "title": "Second",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "level-002-a",
+          "name": "B",
+          "type": "standard",
+          "requiredNotes": ["D4"],
+          "tempoBpm": 80,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 1 },
+          "rewardPayout": { "stars": 1, "noteCurrency": 1 }
+        }
+      ]
+    }
+  ]
+}
+''';
+
+const lessonJsonDuplicateLevelId = '''
+{
+  "schemaVersion": 1,
+  "lessons": [
+    {
+      "id": "lesson-001",
+      "title": "Dup Levels",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "level-001-a",
+          "name": "A",
+          "type": "standard",
+          "requiredNotes": ["C4"],
+          "tempoBpm": 80,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 1 },
+          "rewardPayout": { "stars": 1, "noteCurrency": 1 }
+        },
+        {
+          "id": "level-001-a",
+          "name": "A again",
+          "type": "standard",
+          "requiredNotes": ["D4"],
+          "tempoBpm": 80,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 1 },
+          "rewardPayout": { "stars": 1, "noteCurrency": 1 }
+        }
+      ]
+    }
+  ]
+}
+''';
+
+const lessonJsonNonStringNote = '''
+{
+  "schemaVersion": 1,
+  "lessons": [
+    {
+      "id": "lesson-001",
+      "title": "Bad Notes",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "level-001-a",
+          "name": "A",
+          "type": "standard",
+          "requiredNotes": ["C4", 42],
+          "tempoBpm": 80,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 1 },
+          "rewardPayout": { "stars": 1, "noteCurrency": 1 }
+        }
+      ]
+    }
+  ]
+}
+''';
+
+const lessonJsonEmptyStringNote = '''
+{
+  "schemaVersion": 1,
+  "lessons": [
+    {
+      "id": "lesson-001",
+      "title": "Empty Note",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "level-001-a",
+          "name": "A",
+          "type": "standard",
+          "requiredNotes": ["C4", ""],
+          "tempoBpm": 80,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 1 },
+          "rewardPayout": { "stars": 1, "noteCurrency": 1 }
         }
       ]
     }
