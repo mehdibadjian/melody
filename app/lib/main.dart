@@ -39,7 +39,8 @@ class AdventureMapScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Could not load lessons: ${snapshot.error}'));
+            return Center(
+                child: Text('Could not load lessons: ${snapshot.error}'));
           }
           final doc = snapshot.data!;
           return ListView(
@@ -74,7 +75,8 @@ class AdventureMapScreen extends StatelessWidget {
 /// Level play: adaptive layout — game zone on top, keyboard below
 /// (PRD §6 adaptive UX strategy).
 class LevelPlayScreen extends StatefulWidget {
-  const LevelPlayScreen({super.key, required this.level, required this.progress});
+  const LevelPlayScreen(
+      {super.key, required this.level, required this.progress});
 
   final Level level;
   final PlayerProgress progress;
@@ -138,7 +140,8 @@ class _LevelPlayScreenState extends State<LevelPlayScreen> {
   @override
   Widget build(BuildContext context) {
     final requiredNotes = widget.level.requiredNotes;
-    final targetNote = requiredNotes[_submittedCount.clamp(0, requiredNotes.length - 1)];
+    final targetNote =
+        requiredNotes[_submittedCount.clamp(0, requiredNotes.length - 1)];
     return Scaffold(
       appBar: AppBar(title: Text(widget.level.name)),
       body: LayoutBuilder(
@@ -214,7 +217,8 @@ class _Keyboard extends StatelessWidget {
               child: Material(
                 color: _whiteKeyColors[i % _whiteKeyColors.length],
                 child: InkWell(
-                  onTap: () => onNote('${keys[i]}${i < _whiteKeys.length ? 4 : 5}'),
+                  onTap: () =>
+                      onNote('${keys[i]}${i < _whiteKeys.length ? 4 : 5}'),
                   child: Center(
                     child: Text(
                       '${keys[i]}${i < _whiteKeys.length ? 4 : 5}',

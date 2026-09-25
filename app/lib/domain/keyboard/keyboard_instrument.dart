@@ -4,14 +4,28 @@ import 'package:melody_app/domain/instrument/instrument_engine.dart';
 import 'package:melody_app/domain/instrument/note_event.dart';
 
 /// Chromatic notes per octave, scientific pitch notation.
-const chromaticNotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const chromaticNotes = [
+  'C',
+  'C#',
+  'D',
+  'D#',
+  'E',
+  'F',
+  'F#',
+  'G',
+  'G#',
+  'A',
+  'A#',
+  'B'
+];
 
 /// On-screen virtual keyboard — first concrete [InstrumentInput] (PRD §6).
 ///
 /// Supports multi-touch (multiple simultaneously pressed keys) and evaluates
 /// note events with a timing tolerance that scales with tempo.
 class KeyboardInstrument implements InstrumentInput {
-  KeyboardInstrument({this.octaves = 2, int? timingToleranceMs, int tempoBpm = 90})
+  KeyboardInstrument(
+      {this.octaves = 2, int? timingToleranceMs, int tempoBpm = 90})
       : _fixedToleranceMs = timingToleranceMs,
         _tempoBpm = tempoBpm {
     for (var octave = 0; octave < octaves; octave++) {

@@ -30,8 +30,10 @@ void main() {
       );
 
       expect(flow.submit(const NoteEvent(note: 'C4', timestampMs: 0)), isTrue);
-      expect(flow.submit(const NoteEvent(note: 'D4', timestampMs: 100)), isTrue);
-      expect(flow.submit(const NoteEvent(note: 'E4', timestampMs: 200)), isTrue);
+      expect(
+          flow.submit(const NoteEvent(note: 'D4', timestampMs: 100)), isTrue);
+      expect(
+          flow.submit(const NoteEvent(note: 'E4', timestampMs: 200)), isTrue);
       expect(flow.isComplete, isTrue);
       expect(flow.result!.passed, isTrue);
       expect(progress.stars, 3);
@@ -85,8 +87,10 @@ void main() {
       flow.submit(const NoteEvent(note: 'X4', timestampMs: 0));
       flow.submit(const NoteEvent(note: 'X4', timestampMs: 100));
       flow.submit(const NoteEvent(note: 'X4', timestampMs: 200));
-      expect(events.any((e) => e.type == AnalyticsEventType.practiceSession), isTrue);
-      expect(events.any((e) => e.type == AnalyticsEventType.levelCompleted), isFalse);
+      expect(events.any((e) => e.type == AnalyticsEventType.practiceSession),
+          isTrue);
+      expect(events.any((e) => e.type == AnalyticsEventType.levelCompleted),
+          isFalse);
       expect(flow.result!.starsAwarded, 0);
     });
 
@@ -112,7 +116,8 @@ void main() {
       for (final note in ['C4', 'D4', 'E4']) {
         flow.submit(NoteEvent(note: note, timestampMs: 0));
       }
-      expect(flow.submit(const NoteEvent(note: 'C4', timestampMs: 100)), isFalse);
+      expect(
+          flow.submit(const NoteEvent(note: 'C4', timestampMs: 100)), isFalse);
     });
   });
 }

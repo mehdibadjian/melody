@@ -1,4 +1,3 @@
-
 /// Analytics event types feeding the parental dashboard (PRD §7).
 enum AnalyticsEventType {
   sessionStart,
@@ -98,7 +97,8 @@ class AnalyticsEvent {
   factory AnalyticsEvent.fromJson(Map<String, Object?> json) {
     final typeName = json['type'] as String;
     final type = _typeNames.entries
-        .singleWhere((e) => e.value == typeName, orElse: () => throw ArgumentError('unknown event type: $typeName'))
+        .singleWhere((e) => e.value == typeName,
+            orElse: () => throw ArgumentError('unknown event type: $typeName'))
         .key;
     final occurredAt = DateTime.parse(json['occurredAt'] as String);
     final payload = Map<String, Object?>.of(json)
