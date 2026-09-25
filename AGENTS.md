@@ -21,8 +21,10 @@ code exists yet — the repo currently contains only dev-loop tooling and settin
   - `skills/` — skills: `loop-sweep`, `loop-resolve`, `loop-setup`,
     `create-prd`, `validate-prd`, `advanced-elicitation`, `agent-ux-designer`,
     `checkpoint-preview`, `documentation`
-- `.myloop/` — dev-loop engine directory (currently empty)
-- `.gitignore` — ignores `.claude/settings.local.json`, `.env*`, `.myloop/state*`
+- `.myloop/` — dev-loop engine git submodule (`https://github.com/mehdibadjian/myLoop`) with pure Rust orchestrator binary at `.myloop/engine-rust/target/release/myloop`
+- `.myloop-config/` — myLoop project configuration and artifact path mappings
+- `docs/` — planning and implementation artifacts (`docs/planning/`, `docs/stories/sprint-status.yaml`)
+- `.gitignore` — ignores runtime state, caches, and OS metadata
 - `AGENTS.md` — this file
 
 ## Conventions and workflow
