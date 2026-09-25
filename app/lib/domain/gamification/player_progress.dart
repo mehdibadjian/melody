@@ -32,7 +32,9 @@ class PlayerProgress {
 
   /// Notes the player has demonstrated mastery of (>= 5 hits each).
   Set<String> get notesMastered => Set.unmodifiable(
-        _masteryHits.entries.where((e) => e.value >= masteryHitsRequired).map((e) => e.key),
+        _masteryHits.entries
+            .where((e) => e.value >= masteryHitsRequired)
+            .map((e) => e.key),
       );
 
   int masteryHits(String note) => _masteryHits[note] ?? 0;
@@ -92,7 +94,8 @@ class PlayerProgress {
 
   /// Daily chest is claimable at most once per calendar day.
   bool canClaimDailyChest(DateTime day) =>
-      _lastChestClaimDay == null || !DateOnly(day).isSameDay(_lastChestClaimDay!);
+      _lastChestClaimDay == null ||
+      !DateOnly(day).isSameDay(_lastChestClaimDay!);
 
   void claimDailyChest(DateTime day) {
     if (!canClaimDailyChest(day)) return;

@@ -18,7 +18,9 @@ void main() {
       expect(progress.completedLevelIds, contains('level-001-a'));
     });
 
-    test('completing a level twice does not double-award (first completion only)', () {
+    test(
+        'completing a level twice does not double-award (first completion only)',
+        () {
       final progress = PlayerProgress.initial();
       progress.applyLevelCompletion(
         levelId: 'level-001-a',

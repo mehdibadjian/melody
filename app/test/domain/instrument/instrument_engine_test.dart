@@ -43,18 +43,21 @@ void main() {
     setUp(() => instrument = KeyboardInstrument());
 
     test('correct note passes', () {
-      final result = instrument.evaluate(const NoteEvent(note: 'C4', timestampMs: 0));
+      final result =
+          instrument.evaluate(const NoteEvent(note: 'C4', timestampMs: 0));
       expect(result.correct, isTrue);
       expect(result.expectedNote, 'C4');
     });
 
     test('wrong note fails', () {
-      final result = instrument.evaluate(const NoteEvent(note: 'D4', timestampMs: 0));
+      final result =
+          instrument.evaluate(const NoteEvent(note: 'D4', timestampMs: 0));
       expect(result.correct, isFalse);
     });
 
     test('timing tolerance: on-beat note within tolerance is hit', () {
-      final result = instrument.evaluate(const NoteEvent(note: 'C4', timestampMs: 80));
+      final result =
+          instrument.evaluate(const NoteEvent(note: 'C4', timestampMs: 80));
       expect(result.correct, isTrue);
     });
 
@@ -66,7 +69,8 @@ void main() {
     });
 
     test('wrong pitch reports pitch miss reason', () {
-      final result = instrument.evaluate(const NoteEvent(note: 'F4', timestampMs: 0));
+      final result =
+          instrument.evaluate(const NoteEvent(note: 'F4', timestampMs: 0));
       expect(result.correct, isFalse);
       expect(result.missReason, EvaluationMissReason.pitch);
     });
@@ -78,7 +82,8 @@ void main() {
       final session = instrument.startSession(['C4', 'D4', 'E4', 'F4']);
       session.submit(const NoteEvent(note: 'C4', timestampMs: 0)); // hit
       session.submit(const NoteEvent(note: 'D4', timestampMs: 100)); // hit
-      session.submit(const NoteEvent(note: 'X4', timestampMs: 200)); // pitch miss
+      session
+          .submit(const NoteEvent(note: 'X4', timestampMs: 200)); // pitch miss
       session.submit(const NoteEvent(note: 'F4', timestampMs: 350)); // hit
       expect(session.hits, 3);
       expect(session.totalAttempts, 4);
@@ -114,7 +119,8 @@ void main() {
       );
     });
 
-    test('tolerance window scales with tempo (slower tempo = wider window)', () {
+    test('tolerance window scales with tempo (slower tempo = wider window)',
+        () {
       final slow = KeyboardInstrument(timingToleranceMs: null, tempoBpm: 60);
       final fast = KeyboardInstrument(timingToleranceMs: null, tempoBpm: 180);
       expect(slow.timingToleranceMs, greaterThan(fast.timingToleranceMs));

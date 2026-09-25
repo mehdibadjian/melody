@@ -28,10 +28,12 @@ class ContentParser {
     }
     final lessonsJson = json['lessons'];
     if (lessonsJson is! List || lessonsJson.isEmpty) {
-      throw const ContentValidationException('lessons must be a non-empty list');
+      throw const ContentValidationException(
+          'lessons must be a non-empty list');
     }
     final lessons = lessonsJson.map(_parseLesson).toList();
-    return ContentDocument(schemaVersion: schemaVersion as int, lessons: lessons);
+    return ContentDocument(
+        schemaVersion: schemaVersion as int, lessons: lessons);
   }
 
   static Lesson _parseLesson(Object? raw) {
@@ -100,7 +102,8 @@ class ContentParser {
     final stars = payoutJson['stars'];
     final noteCurrency = payoutJson['noteCurrency'];
     if (stars is! int || stars < 0) {
-      throw const ContentValidationException('stars must be a non-negative int');
+      throw const ContentValidationException(
+          'stars must be a non-negative int');
     }
     if (noteCurrency is! int || noteCurrency < 0) {
       throw const ContentValidationException(
@@ -113,8 +116,8 @@ class ContentParser {
       type: type == 'boss_battle' ? LevelType.bossBattle : LevelType.standard,
       requiredNotes: requiredNotes.cast<String>(),
       tempoBpm: tempo,
-      successThreshold:
-          SuccessThreshold(minAccuracy: minAccuracy.toDouble(), minNotesHit: minNotesHit),
+      successThreshold: SuccessThreshold(
+          minAccuracy: minAccuracy.toDouble(), minNotesHit: minNotesHit),
       rewardPayout: RewardPayout(stars: stars, noteCurrency: noteCurrency),
     );
   }
