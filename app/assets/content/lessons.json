@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "lessons": [
+    {
+      "id": "lesson-001",
+      "title": "First Notes",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "level-001-a",
+          "name": "Three Friends",
+          "type": "standard",
+          "requiredNotes": ["C4", "D4", "E4"],
+          "tempoBpm": 80,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 2 },
+          "rewardPayout": { "stars": 3, "noteCurrency": 5 }
+        },
+        {
+          "id": "level-001-b",
+          "name": "Climbing Stairs",
+          "type": "standard",
+          "requiredNotes": ["C4", "D4", "E4", "F4", "G4"],
+          "tempoBpm": 90,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 4 },
+          "rewardPayout": { "stars": 4, "noteCurrency": 6 }
+        }
+      ]
+    },
+    {
+      "id": "lesson-002",
+      "title": "Boss: Note Guardian",
+      "difficulty": "advanced",
+      "levels": [
+        {
+          "id": "level-002-boss",
+          "name": "The Guardian",
+          "type": "boss_battle",
+          "requiredNotes": ["G4", "A4", "B4", "C5"],
+          "tempoBpm": 100,
+          "successThreshold": { "minAccuracy": 0.85, "minNotesHit": 3 },
+          "rewardPayout": { "stars": 8, "noteCurrency": 12 }
+        }
+      ]
+    }
+  ]
+}
