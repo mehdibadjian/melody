@@ -1,0 +1,3 @@
+[submodule ".myloop"]
+	path = .myloop
+	url = git@github.com:mehdibadjian/myLoop.git
