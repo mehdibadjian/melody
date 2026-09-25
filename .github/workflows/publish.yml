@@ -2,7 +2,7 @@ name: Publish build
 
 on:
   push:
-    tags: ["v*"]
+    tags: ["v*", "melody-app-v*"]
   workflow_dispatch:
 
 permissions:
