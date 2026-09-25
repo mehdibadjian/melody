@@ -47,6 +47,10 @@ class LessonSession {
         _attempts = 0;
 
   final List<String> _expected;
+
+  // Kept for instrument-level timing feedback; the session's own scoring is
+  // pitch-based (see [submit]).
+  // ignore: unused_field
   final int Function() _toleranceMs;
   int _position;
   int _hits;
@@ -64,20 +68,22 @@ class LessonSession {
 
   /// Submits a note event for evaluation against the next expected note.
   ///
+  /// Judged on pitch/sequence only: the session moves through the expected
+  /// sequence and counts hits, while live timing correctness is the
+  /// instrument's concern ([InstrumentInput.evaluate] checks arrival against
+  /// the target window). Gap-based timing here would punish normal beat
+  /// spacing and penalize the first note (non-punitive, PRD §5).
+  ///
   /// Position advances past misses too: the session moves on to the next
-  /// expected note regardless of outcome (non-punitive, PRD §5).
+  /// expected note regardless of outcome.
   void submit(NoteEvent event) {
     if (complete) return;
     final expected = _expected[_position];
-    final correct = event.note == expected &&
-        (event.timestampMs - _lastAcceptedTimestampMs).abs() <= _toleranceMs();
-    _lastAcceptedTimestampMs = event.timestampMs;
+    final correct = event.note == expected;
     _attempts++;
     if (correct) _hits++;
     _position++;
   }
-
-  int _lastAcceptedTimestampMs = 0;
 
   /// Whether the session result satisfies the level's success threshold.
   bool passes(SuccessThreshold threshold) {
