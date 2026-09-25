@@ -3,11 +3,11 @@ name: Release Please
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: write
-  issues: write
 
 jobs:
   release-please:
@@ -18,3 +18,53 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      - name: Auto-merge release PRs on green CI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # Prefer native auto-merge; it merges as soon as required checks pass.
+          enable_native() {
+            gh pr merge "$1" --repo "$REPO" --auto --squash >/dev/null 2>&1
+          }
+
+          poll_and_merge() {
+            local pr="$1"
+            local head_sha deadline pending success failing
+            head_sha="$(gh pr view "$pr" --repo "$REPO" --json headRefOid -q .headRefOid)"
+            echo "Polling CI checks for PR #$pr at $head_sha"
+            deadline=$((SECONDS + 900))
+            while [ "$SECONDS" -lt "$deadline" ]; do
+              sleep 20
+              pending="$(gh api "repos/$REPO/commits/$head_sha/check-runs?per_page=100" \
+                --jq '[.check_runs[] | select(.app.slug == "github-actions")] | length')"
+              failing="$(gh api "repos/$REPO/commits/$head_sha/check-runs?per_page=100" \
+                --jq '[.check_runs[] | select(.app.slug == "github-actions" and (.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out"))] | length')"
+              if [ "${failing:-0}" -gt 0 ]; then
+                echo "CI is red on PR #$pr; leaving it open for manual follow-up."
+                return 0
+              fi
+              success="$(gh api "repos/$REPO/commits/$head_sha/check-runs?per_page=100" \
+                --jq '[.check_runs[] | select(.app.slug == "github-actions" and .conclusion == "success")] | length')"
+              echo "checks: total=$pending success=$success"
+              if [ "${pending:-0}" -ge 1 ] && [ "$success" -eq "$pending" ]; then
+                echo "All checks green; squash-merging PR #$pr"
+                gh pr merge "$pr" --repo "$REPO" --squash && return 0
+              fi
+            done
+            echo "Timed out waiting for CI on PR #$pr; leaving it open."
+          }
+
+          for pr in $(gh pr list --repo "$REPO" \
+              --label "autorelease: pending" --state open \
+              --json number -q '.[].number'); do
+            echo "Processing release PR #$pr"
+            if enable_native "$pr"; then
+              echo "Native auto-merge enabled on PR #$pr"
+              continue
+            fi
+            poll_and_merge "$pr"
+          done
