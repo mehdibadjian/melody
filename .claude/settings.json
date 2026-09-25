@@ -10,6 +10,17 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "\"$CLAUDE_PROJECT_DIR/.myloop/engine-rust/target/release/myloop\" hook PreToolUse",
+            "type": "command"
+          }
+        ],
+        "matcher": "Read|Bash"
+      }
+    ],
     "SessionEnd": [
       {
         "hooks": [

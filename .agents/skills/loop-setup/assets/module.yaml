@@ -1,0 +1,17 @@
+code: myloop
+name: myLoop Automation Skills
+description: "Automation-mode skills driven by the myloop orchestrator: interactive escalation resolution (loop-resolve) and deferred-work sweep triage (loop-sweep) — the inner dev primitive (which self-reviews and commits) is the build-auto skill"
+module_version: 0.9.0
+default_selected: false
+module_greeting: >
+  myloop installed — both the automation skills and the myloop orchestrator
+  binary (pure Rust, no runtime dependency). Setup built/located the binary,
+  ran `myloop init` (skills + hooks + policy + gitignore), and `myloop
+  validate` (preflight). The skills are invoked by the orchestrator and must
+  stay installed together — the loop-sweep skill normalizes and migrates the
+  deferred-work ledger per its own deferred-work-format.md. They require the
+  lifecycle skill pack: a .myloop-config/core/config.yaml and a
+  sprint-status.yaml from sprint-planning. Run
+  `myloop run` to start. To upgrade later, just re-run `/loop-setup` (or
+  `/loop-setup upgrade`) — it rebuilds the binary and refreshes the
+  per-project skills for you.

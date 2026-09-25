@@ -1,0 +1,4 @@
+# Artifact path config consumed by the myloop Rust engine (config.rs).
+output_folder: "{project-root}/docs"
+planning_artifacts: "{project-root}/docs/planning"
+implementation_artifacts: "{project-root}/docs/stories"

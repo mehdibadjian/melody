@@ -1,0 +1,15 @@
+# Melody — central myloop config (base layer).
+# Override in config.user.toml / custom/*.toml (git-ignored personal/team layers).
+
+[core]
+user_name = "Mehdi"
+communication_language = "English"
+document_output_language = "English"
+user_skill_level = "expert"
+project_name = "Melody"
+output_folder = "{project-root}/docs"
+planning_artifacts = "{project-root}/docs/planning"
+implementation_artifacts = "{project-root}/docs/stories"
+
+[modules.myloop]
+project_knowledge = "{project-root}/AGENTS.md"

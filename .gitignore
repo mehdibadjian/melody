@@ -1,3 +1,5 @@
 .myloop-runtime/runs/
 .myloop-runtime/cache/
 .myloop-runtime/policy.toml
+.myloop-config/render/
+.DS_Store
