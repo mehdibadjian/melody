@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/mehdibadjian/melody/compare/v1.4.0...v1.5.0) (2026-09-26)
+
+
+### Features
+
+* close foundation-review gaps — state notification, analytics sink, UI wiring ([#22](https://github.com/mehdibadjian/melody/issues/22)) ([598463a](https://github.com/mehdibadjian/melody/commit/598463acd452c1e61958e24aa4fe2403e32a8d0a))
+
 ## [1.4.0](https://github.com/mehdibadjian/melody/compare/v1.3.0...v1.4.0) (2026-09-26)
 
 
