@@ -1,6 +1,7 @@
 # Melody v1 Implementation Plan
 
-Derived from PRD (Revised Specification). Scope for this milestone: shippable core
+Derived from PRD (Revised Specification, `docs/planning/prd.md`). Scope for
+this milestone: shippable core
 of the keyboard training app with content-driven architecture, fully TDD.
 
 ## In scope

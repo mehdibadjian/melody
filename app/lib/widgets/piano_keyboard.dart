@@ -39,13 +39,24 @@ class PianoKeyboard extends StatelessWidget {
                 child: InkWell(
                   onTap: () =>
                       onNote('${keys[i]}${i < _whiteKeys.length ? 4 : 5}'),
-                  child: Center(
-                    child: Text(
-                      '${keys[i]}${i < _whiteKeys.length ? 4 : 5}',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: '${keys[i]}${i < _whiteKeys.length ? 4 : 5}' ==
+                                targetNote
+                            ? Colors.white
+                            : Colors.transparent,
+                        width: 4,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${keys[i]}${i < _whiteKeys.length ? 4 : 5}',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),

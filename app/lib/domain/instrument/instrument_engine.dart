@@ -36,22 +36,20 @@ class EvaluationResult {
 }
 
 /// Stateful evaluator for one run of a level.
+///
+/// Scoring is pitch-only (non-punitive, PRD §3): the session advances through
+/// the expected note sequence counting hits. Real-time timing feedback is the
+/// instrument's concern via [InstrumentInput.evaluate]; the session never
+/// penalizes late/early arrival so normal beat spacing and first-note gaps
+/// don't count as misses.
 class LessonSession {
-  LessonSession({
-    required List<String> expectedNotes,
-    required int Function() timingToleranceMs,
-  })  : _expected = List.of(expectedNotes),
-        _toleranceMs = timingToleranceMs,
+  LessonSession({required List<String> expectedNotes})
+      : _expected = List.of(expectedNotes),
         _position = 0,
         _hits = 0,
         _attempts = 0;
 
   final List<String> _expected;
-
-  // Kept for instrument-level timing feedback; the session's own scoring is
-  // pitch-based (see [submit]).
-  // ignore: unused_field
-  final int Function() _toleranceMs;
   int _position;
   int _hits;
   int _attempts;
@@ -60,7 +58,7 @@ class LessonSession {
   int get totalAttempts => _attempts;
 
   /// Fraction of attempted notes that were hit. Defined as 1.0 when nothing
-  /// has been attempted yet (non-punitive default per PRD §5).
+  /// has been attempted yet (non-punitive default per PRD §3).
   double get accuracy => _attempts == 0 ? 1.0 : _hits / _attempts;
 
   /// True when every expected note has been evaluated.
@@ -72,7 +70,7 @@ class LessonSession {
   /// sequence and counts hits, while live timing correctness is the
   /// instrument's concern ([InstrumentInput.evaluate] checks arrival against
   /// the target window). Gap-based timing here would punish normal beat
-  /// spacing and penalize the first note (non-punitive, PRD §5).
+  /// spacing and penalize the first note (non-punitive, PRD §3).
   ///
   /// Position advances past misses too: the session moves on to the next
   /// expected note regardless of outcome.
