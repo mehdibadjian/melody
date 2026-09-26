@@ -75,7 +75,13 @@ final lessonsProvider = FutureProvider((ref) {
 });
 
 final audioEngineProvider = Provider<AudioEngine>((ref) {
-  final engine = SynthAudioEngine();
-  ref.onDispose(() => engine.dispose());
+  // Real playback uses the bundled per-note WAVs (AssetAudioEngine); the
+  // SynthAudioEngine double is test-only and silent in a shipped build.
+  final engine = AssetAudioEngine();
+  // Initialize off the synchronous path: audioplayers needs a platform
+  // channel that is absent in tests, and audio must never crash the app.
+  // On failure the engine stays uninitialized, so playNote is a safe no-op.
+  engine.initialize().catchError((_) {});
+  ref.onDispose(() => engine.dispose().catchError((_) {}));
   return engine;
 });
