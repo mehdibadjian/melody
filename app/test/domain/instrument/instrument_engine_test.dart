@@ -144,5 +144,25 @@ void main() {
       final fast = KeyboardInstrument(timingToleranceMs: null, tempoBpm: 180);
       expect(slow.timingToleranceMs, greaterThan(fast.timingToleranceMs));
     });
+
+    test(
+        'session scoring is pitch-only; instrument timing is separate feedback',
+        () {
+      final instrument = KeyboardInstrument(tempoBpm: 60);
+      final session = instrument.startSession(['C4', 'D4']);
+
+      // Instrument-level evaluate checks timing
+      final lateResult = instrument.evaluate(
+        const NoteEvent(note: 'C4', timestampMs: 5000),
+      );
+      expect(lateResult.correct, isFalse);
+      expect(lateResult.missReason, EvaluationMissReason.timing);
+
+      // Session-level submit ignores timing — only pitch matters
+      session.submit(const NoteEvent(note: 'C4', timestampMs: 5000));
+      session.submit(const NoteEvent(note: 'D4', timestampMs: 10000));
+      expect(session.hits, 2);
+      expect(session.accuracy, 1.0);
+    });
   });
 }

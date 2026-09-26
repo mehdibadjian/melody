@@ -36,22 +36,20 @@ class EvaluationResult {
 }
 
 /// Stateful evaluator for one run of a level.
+///
+/// Scoring is pitch-only (non-punitive, PRD §5): the session advances through
+/// the expected note sequence counting hits. Real-time timing feedback is the
+/// instrument's concern via [InstrumentInput.evaluate]; the session never
+/// penalizes late/early arrival so normal beat spacing and first-note gaps
+/// don't count as misses.
 class LessonSession {
-  LessonSession({
-    required List<String> expectedNotes,
-    required int Function() timingToleranceMs,
-  })  : _expected = List.of(expectedNotes),
-        _toleranceMs = timingToleranceMs,
+  LessonSession({required List<String> expectedNotes})
+      : _expected = List.of(expectedNotes),
         _position = 0,
         _hits = 0,
         _attempts = 0;
 
   final List<String> _expected;
-
-  // Kept for instrument-level timing feedback; the session's own scoring is
-  // pitch-based (see [submit]).
-  // ignore: unused_field
-  final int Function() _toleranceMs;
   int _position;
   int _hits;
   int _attempts;

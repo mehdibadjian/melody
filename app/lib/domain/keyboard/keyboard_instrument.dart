@@ -104,10 +104,7 @@ class KeyboardInstrument implements InstrumentInput {
 
   @override
   LessonSession startSession(List<String> expectedNotes) {
-    return LessonSession(
-      expectedNotes: expectedNotes,
-      timingToleranceMs: () => timingToleranceMs,
-    );
+    return LessonSession(expectedNotes: expectedNotes);
   }
 
   void dispose() => _controller.close();
