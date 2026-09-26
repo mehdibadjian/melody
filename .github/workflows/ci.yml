@@ -46,3 +46,22 @@ jobs:
 
       - name: Run tests
         run: flutter test --coverage
+
+      - name: Coverage floor (80%)
+        run: |
+          python3 - <<'EOF'
+          import sys
+          lf = lh = 0
+          with open('coverage/lcov.info') as f:
+              for line in f:
+                  if line.startswith('LF:'):
+                      lf += int(line[3:])
+                  elif line.startswith('LH:'):
+                      lh += int(line[3:])
+          if lf == 0:
+              sys.exit('coverage floor: lcov.info contained no line data')
+          pct = lh / lf * 100
+          print(f'line coverage: {lh}/{lf} = {pct:.2f}% (floor 80%)')
+          if pct < 80:
+              sys.exit(f'coverage {pct:.2f}% is below the 80% floor')
+          EOF
