@@ -4,7 +4,8 @@ import 'package:melody_app/domain/content/content_models.dart';
 
 /// Parses and validates lesson content documents against schema v1.
 class ContentParser {
-  static const supportedSchemaVersion = 1;
+  static const supportedSchemaVersion = 2;
+  static const supportedSchemaVersions = {1, 2};
   static const minTempoBpm = 40;
   static const maxTempoBpm = 240;
   static const allowedDifficulties = {'beginner', 'intermediate', 'advanced'};
@@ -21,7 +22,8 @@ class ContentParser {
 
   static ContentDocument parseMap(Map<String, dynamic> json) {
     final schemaVersion = json['schemaVersion'];
-    if (schemaVersion != supportedSchemaVersion) {
+    if (schemaVersion is! int ||
+        !supportedSchemaVersions.contains(schemaVersion)) {
       throw ContentValidationException(
         'unsupported schemaVersion: $schemaVersion',
       );
@@ -38,8 +40,7 @@ class ContentParser {
       throw ContentValidationException(
           'duplicate lesson id: $duplicateLessonId');
     }
-    return ContentDocument(
-        schemaVersion: schemaVersion as int, lessons: lessons);
+    return ContentDocument(schemaVersion: schemaVersion, lessons: lessons);
   }
 
   static Lesson _parseLesson(Object? raw) {
@@ -64,7 +65,29 @@ class ContentParser {
       title: _requiredString(raw, 'title'),
       difficulty: Difficulty.values.byName(difficulty as String),
       levels: levels,
+      songTitle: _optionalString(raw, 'songTitle'),
+      genre: _optionalString(raw, 'genre', allowEmpty: false) ?? '',
+      attribution: _optionalString(raw, 'attribution') ?? '',
     );
+  }
+
+  /// Reads an optional string field. Returns null when absent. When
+  /// [allowEmpty] is false, an empty string is rejected (a present-but-blank
+  /// value is an authoring error; an absent value is fine).
+  static String? _optionalString(
+    Map<String, dynamic> json,
+    String key, {
+    bool allowEmpty = true,
+  }) {
+    final value = json[key];
+    if (value == null) return null;
+    if (value is! String) {
+      throw ContentValidationException('$key must be a string');
+    }
+    if (!allowEmpty && value.isEmpty) {
+      throw ContentValidationException('$key must not be empty when present');
+    }
+    return value;
   }
 
   static Level _parseLevel(Object? raw) {
