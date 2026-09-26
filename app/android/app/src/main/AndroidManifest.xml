@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Acoustic coaching: the app listens to the child play a real keyboard
+         through the microphone. Audio is analysed on-device for pitch only and
+         is never stored or transmitted (PRD §7 COPPA/GDPR-K). -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <application
         android:label="melody_app"
         android:name="${applicationName}"

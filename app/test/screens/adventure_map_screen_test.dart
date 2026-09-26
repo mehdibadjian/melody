@@ -3,10 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:melody_app/domain/audio/audio_engine.dart';
 import 'package:melody_app/domain/content/content_models.dart';
 import 'package:melody_app/providers.dart';
+import 'package:melody_app/screens/acoustic_practice_screen.dart';
 import 'package:melody_app/screens/adventure_map_screen.dart';
+import 'package:melody_app/screens/level_play_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../support/fake_mic.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +34,10 @@ void main() {
     return ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        // Both play screens need these; provide fakes so navigation tests
+        // exercise the real routing without a device mic or audio output.
+        audioEngineProvider.overrideWith((ref) => SynthAudioEngine()),
+        micCaptureProvider.overrideWithValue(FakeMicCapture()),
         if (lessonsFuture != null)
           lessonsProvider.overrideWith((ref) => lessonsFuture),
       ],
@@ -123,5 +132,52 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Notes 2'), findsOneWidget);
+  });
+
+  group('lesson play-mode chooser', () {
+    Future<void> openChooser(
+        WidgetTester tester, ProviderContainer container) async {
+      addTearDown(container.dispose);
+      await tester.pumpWidget(buildApp(container: container));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('First Notes'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('tapping a lesson offers both play modes', (tester) async {
+      final container = await makeContainer(
+        lessonsFuture: Future<ContentDocument>.value(testDoc),
+      );
+      await openChooser(tester, container);
+
+      expect(find.byKey(const Key('play-mode-real-keyboard')), findsOneWidget);
+      expect(find.byKey(const Key('play-mode-on-screen')), findsOneWidget);
+    });
+
+    testWidgets('real-keyboard mode opens the acoustic practice screen',
+        (tester) async {
+      final container = await makeContainer(
+        lessonsFuture: Future<ContentDocument>.value(testDoc),
+      );
+      await openChooser(tester, container);
+
+      await tester.tap(find.byKey(const Key('play-mode-real-keyboard')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AcousticPracticeScreen), findsOneWidget);
+      expect(find.byKey(const Key('start-listening')), findsOneWidget);
+    });
+
+    testWidgets('on-screen mode opens the level play screen', (tester) async {
+      final container = await makeContainer(
+        lessonsFuture: Future<ContentDocument>.value(testDoc),
+      );
+      await openChooser(tester, container);
+
+      await tester.tap(find.byKey(const Key('play-mode-on-screen')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LevelPlayScreen), findsOneWidget);
+    });
   });
 }
