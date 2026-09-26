@@ -27,6 +27,11 @@ jobs:
     outputs:
       tag: ${{ steps.resolve-tag.outputs.tag }}
     steps:
+      - uses: actions/checkout@v7
+        with:
+          # Empty for push/workflow_dispatch → falls back to the event ref.
+          ref: ${{ github.event.client_payload.tag }}
+
       - name: Resolve release tag
         id: resolve-tag
         run: |
@@ -34,10 +39,6 @@ jobs:
             refs/tags/*) echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT" ;;
             *) echo "tag=${DISPATCH_TAG}" >> "$GITHUB_OUTPUT" ;;
           esac
-
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ steps.resolve-tag.outputs.tag || github.ref }}
 
       - name: Set up Java
         uses: actions/setup-java@v6
