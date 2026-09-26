@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:melody_app/domain/acoustic/mic_capture.dart';
 import 'package:melody_app/domain/analytics/analytics_store.dart';
 import 'package:melody_app/domain/audio/audio_engine.dart';
 import 'package:melody_app/domain/content/content_models.dart';
 import 'package:melody_app/domain/content/content_repository.dart';
 import 'package:melody_app/domain/gamification/player_progress.dart';
 import 'package:melody_app/domain/gamification/progress_store.dart';
+import 'package:melody_app/platform/record_mic_capture.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -84,4 +86,12 @@ final audioEngineProvider = Provider<AudioEngine>((ref) {
   engine.initialize().catchError((_) {});
   ref.onDispose(() => engine.dispose().catchError((_) {}));
   return engine;
+});
+
+/// Microphone capture for acoustic coaching. Overridden in tests with a fake
+/// so the listen→detect→coach loop is CI-verified without a device mic.
+final micCaptureProvider = Provider<MicCapture>((ref) {
+  final capture = RecordMicCapture();
+  ref.onDispose(() => capture.dispose());
+  return capture;
 });

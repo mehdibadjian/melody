@@ -73,6 +73,7 @@ class AcousticPracticeController {
     this.childProfileId = 'child-local',
     this.sampleRate = 22050,
     this.onComplete,
+    this.onAnalyticsEvent,
     DateTime Function()? now,
   })  : _mic = mic,
         _now = now ?? (() => DateTime.now().toUtc()),
@@ -90,7 +91,7 @@ class AcousticPracticeController {
   AcousticSnapshot _snapshot;
   DateTime? _startedAt;
 
-  /// Set by the screen/provider: receives analytics events (the store sink).
+  /// Receives analytics events (the store sink). Set via constructor or after.
   void Function(AnalyticsEvent event)? onAnalyticsEvent;
 
   /// Called once when the song is completed (commit progress + rewards).
@@ -177,14 +178,16 @@ class AcousticPracticeController {
     }
   }
 
-  /// Releases the mic, analyser, and subscriptions. Idempotent.
+  /// Stops capture and releases the analyser + subscriptions. Idempotent.
+  /// Does NOT dispose the [MicCapture] — its lifecycle is owned by whoever
+  /// provided it (the Riverpod `micCaptureProvider`), so the same capture can
+  /// be reused across practice runs.
   Future<void> dispose() async {
     await _pcmSub?.cancel();
     _pcmSub = null;
     await _analyzer?.dispose();
     _analyzer = null;
     await _mic.stop();
-    await _mic.dispose();
     _snapshot = _snapshot.copyWith(listening: false);
     _listeners.clear();
   }

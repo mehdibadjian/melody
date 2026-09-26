@@ -170,13 +170,14 @@ void main() {
       await c.dispose();
     });
 
-    test('dispose stops capture and releases resources', () async {
+    test('dispose stops capture but leaves the mic to its owner', () async {
       final mic = FakeMicCapture();
       final c = build(mic);
       await c.start();
       await c.dispose();
       expect(mic.stopped, isTrue);
-      expect(mic.disposed, isTrue);
+      expect(mic.disposed, isFalse,
+          reason: 'mic lifecycle is owned by the provider, not the controller');
       expect(c.listening, isFalse);
     });
 

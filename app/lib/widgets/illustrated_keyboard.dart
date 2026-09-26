@@ -87,7 +87,8 @@ class IllustratedKeyboard extends StatelessWidget {
               // Target glow overlay (ignores taps so keys stay pressable).
               if (windowNotes.contains(targetNote))
                 _overlayMarker(
-                  key: const Key('target-glow'),
+                  markerKey: const Key('target-glow'),
+                  noteKey: Key('target-$targetNote'),
                   left: _keyLeft(targetNote, whiteKeys, whiteWidth, blackWidth,
                       constraints.maxWidth),
                   isBlack: isBlackKeyMidi(midiFromNote(targetNote)!),
@@ -108,7 +109,8 @@ class IllustratedKeyboard extends StatelessWidget {
               // Detected-note marker (what the mic heard).
               if (detectedNote != null && windowNotes.contains(detectedNote!))
                 _overlayMarker(
-                  key: const Key('detected-marker'),
+                  markerKey: const Key('detected-marker'),
+                  noteKey: Key('detected-$detectedNote'),
                   left: _keyLeft(detectedNote!, whiteKeys, whiteWidth,
                       blackWidth, constraints.maxWidth),
                   isBlack: isBlackKeyMidi(midiFromNote(detectedNote!)!),
@@ -197,7 +199,8 @@ class IllustratedKeyboard extends StatelessWidget {
   }
 
   Widget _overlayMarker({
-    required Key key,
+    required Key markerKey,
+    required Key noteKey,
     required double left,
     required bool isBlack,
     required Color color,
@@ -205,13 +208,14 @@ class IllustratedKeyboard extends StatelessWidget {
     required Widget? child,
   }) {
     return Positioned(
+      key: noteKey,
       left: left,
       top: 0,
       bottom: isBlack ? height * 0.30 : 0,
       width: width,
       child: IgnorePointer(
         child: Container(
-          key: key,
+          key: markerKey,
           decoration: BoxDecoration(
             border: Border.all(color: color, width: 4),
             borderRadius: BorderRadius.circular(8),
