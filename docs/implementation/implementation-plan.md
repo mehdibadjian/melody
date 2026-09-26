@@ -171,6 +171,14 @@ passing** · coverage **1060/1112 = 95.32%** (floor 80%). `AcousticPracticeScree
 100%, `AcousticPracticeController` 97%, `adventure_map_screen` 100%;
 `RecordMicCapture` 0% (device-only by design). CI green on the merged commit.
 
+> Caveat caught post-merge: CI (`ci.yml`) runs `flutter test` only and never
+> builds an APK, so it did **not** catch that the new `record` plugin broke
+> `flutter build apk --release` on Flutter 3.24.3 — the v1.6.0 publish produced
+> no APK. Fixed in *Story 13* (`epic-2/android-release-build-fix`, PR #30 →
+> v1.6.1): pin `record_android` to 1.3.3 + app `minSdk = 23`. Lesson: Android
+> build-config changes need a real `flutter build apk --release`, not just
+> `flutter test`.
+
 ## What is NOT done (open, needs hardware)
 
 - **On-device live-mic validation + calibration** (`stableFramesRequired`,

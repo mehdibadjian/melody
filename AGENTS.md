@@ -99,6 +99,14 @@ A children's music-learning app (ages 6–10) specified via a PRD
   --fatal-infos` → `flutter test --coverage` → an 80% line-coverage floor
   (parsed from `coverage/lcov.info` LF/LH). Match this exactly before pushing;
   docs-only changes outside `app/**` do not trigger CI.
+- **CI does NOT build an APK** (`ci.yml` runs `flutter test`, which never
+  invokes Gradle). Android-only breakages — Gradle plugin compatibility,
+  minSdk/manifest merge, signing — are invisible until `publish.yml` runs at
+  release time. When you touch Android build config or add an Android plugin,
+  verify with a real `flutter build apk --release` (the v1.6.0 publish failed
+  this way; see `epic-2/android-release-build-fix`). Local repro: install Java
+  17 + Android SDK 34 (Gradle wrapper 8.3 does not run on Java 21), then
+  `flutter config --android-sdk <path> --jdk-dir <jdk17>` and build.
 - Flutter SDK is at `/opt/flutter` in the sandbox (3.24.3 stable / Dart 3.5.3);
   add `/opt/flutter/bin` to `PATH`. `Color.withValues` does NOT exist on this
   version — use `withOpacity`.
@@ -128,8 +136,15 @@ A children's music-learning app (ages 6–10) specified via a PRD
   MIDI span. `assets/content/lessons.json` ships 11 public-domain songs across
   6 genres; `shipped_song_library_test.dart` guards board-fit + bundled audio.
 - `record` is pinned to `^6.1.2` (resolves 6.2.1) to match Flutter 3.24.3 /
-  Dart 3.5.3; 7.x requires a newer toolchain. Android declares `RECORD_AUDIO`
-  (iOS `NSMicrophoneUsageDescription` not yet added).
+  Dart 3.5.3; 7.x requires a newer toolchain. `record_android` is additionally
+  pinned to **1.3.3** via `dependency_overrides` — 1.4.0+ needs Flutter 3.27+
+  (`compileSdk = flutter.compileSdkVersion`), which breaks the release APK build
+  on 3.24.3. Android declares `RECORD_AUDIO`; app `minSdk = 23` (record needs
+  it). iOS `NSMicrophoneUsageDescription` not yet added. See
+  `epic-2/android-release-build-fix`.
+- Released **v1.6.1** (PR #30) — the first release carrying a working APK for
+  the acoustic feature (`melody-v1.6.1.apk`). v1.6.0 (the feature merge) built
+  no APK due to the Android break above.
 - Privacy (PRD §7): audio analysed on-device for pitch only; never stored or
   transmitted.
 - **Open release gate:** on-device live-mic validation + calibration of

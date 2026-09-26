@@ -1,10 +1,13 @@
 # Epic 2 — Acoustic Real-Keyboard Coaching
 
-**Status:** in-progress (built, merged to `main`, pending on-device validation)
+**Status:** in-progress (built, merged to `main`, released v1.6.1; pending
+on-device validation)
 **PRD refs:** §3 (Instrument Engine), §9.2 (microphone acoustic pitch detection
 feasibility gate), §8 (Phase 0 → Phase 2+ acoustic input)
 **Branch:** `qoder/spike-acoustic-pitch` → squash-merged to `main` as `88e38e7`
-**PR:** [#28](https://github.com/mehdibadjian/melody/pull/28)
+**PRs:** [#28](https://github.com/mehdibadjian/melody/pull/28) (feature) ·
+[#30](https://github.com/mehdibadjian/melody/pull/30) (Android release-build
+fix → v1.6.1)
 **Tracking:** `file-system` (stories under `docs/stories/epic-2/`)
 
 ## Goal
@@ -67,7 +70,12 @@ device-specific.
 | 9 | [Live mic capture seam + practice controller](epic-2/live-capture-seam.md) | done | `df8a73f` |
 | 10 | [Acoustic practice screen](epic-2/acoustic-practice-screen.md) | done | `d369303` |
 | 11 | [Play-mode navigation](epic-2/play-mode-navigation.md) | done | `14b0c4d` |
+| 13 | [Android release-build fix](epic-2/android-release-build-fix.md) | done | `caa2c15` |
 | 12 | [On-device live-mic validation](epic-2/on-device-validation.md) | backlog | — |
+
+> Story 13 landed after 11 but is a **prerequisite for 12**: the feature merge
+> broke `flutter build apk --release`, so no installable APK existed until the
+> fix shipped v1.6.1. Story 12 validates that APK on a device.
 
 ## Definition of Done (epic)
 
@@ -82,6 +90,9 @@ device-specific.
 - [x] `dart format` clean · `flutter analyze --fatal-infos` clean · 217 tests
       passing · coverage ≥ 80% floor (95.32% at merge).
 - [x] Merged to `main` (squash `88e38e7`); CI green.
+- [x] A **release APK builds and ships** (story 13): `flutter build apk
+      --release` succeeds on Flutter 3.24.3; v1.6.1 release carries
+      `melody-v1.6.1.apk` (release-signed, verified by CI).
 - [ ] **On-device live-mic validation** (story 12) — confirm it genuinely hears
       a physical keyboard in a real room, and calibrate `stableFramesRequired`
       / `clarityThreshold`. Until this passes, the release stays non-publishing
