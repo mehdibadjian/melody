@@ -83,7 +83,13 @@ void main() {
 
     expect(find.text('First Notes'), findsOneWidget);
     expect(find.text('beginner'), findsOneWidget);
-    expect(find.byIcon(Icons.music_note), findsOneWidget);
+    // AppBar HUD also uses a music_note icon; the lesson tile's is size 36.
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Icon && w.icon == Icons.music_note && w.size == 36,
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('shows error message when content fails to load', (tester) async {

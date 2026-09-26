@@ -30,7 +30,7 @@ void main() {
     return ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
-        audioEngineProvider.overrideWith(() => SynthAudioEngine()),
+        audioEngineProvider.overrideWith((ref) => SynthAudioEngine()),
       ],
     );
   }

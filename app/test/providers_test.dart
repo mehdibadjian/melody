@@ -28,8 +28,8 @@ void main() {
 
       final before = container.read(playerProgressProvider);
       final emitted = <PlayerProgress>[];
-      final sub = container
-          .listen(playerProgressProvider, (_, next) => emitted.add(next));
+      final sub = container.listen(
+          playerProgressProvider, (_, next) => emitted.add(next));
       addTearDown(sub.close);
 
       container.read(playerProgressProvider.notifier).applyLevelCompletion(
@@ -54,8 +54,8 @@ void main() {
 
       final before = container.read(playerProgressProvider);
       final emitted = <PlayerProgress>[];
-      final sub = container
-          .listen(playerProgressProvider, (_, next) => emitted.add(next));
+      final sub = container.listen(
+          playerProgressProvider, (_, next) => emitted.add(next));
       addTearDown(sub.close);
 
       container
@@ -87,8 +87,8 @@ void main() {
       sessionCopy.recordNoteMastery('C4', hit: true);
 
       final emitted = <PlayerProgress>[];
-      final sub = container
-          .listen(playerProgressProvider, (_, next) => emitted.add(next));
+      final sub = container.listen(
+          playerProgressProvider, (_, next) => emitted.add(next));
       addTearDown(sub.close);
 
       container

@@ -13,7 +13,9 @@ class LevelSessionFlow {
     required InstrumentInput instrument,
     required this.progress,
     this.onAnalyticsEvent,
+    DateTime Function()? now,
   })  : _instrument = instrument,
+        _now = now ?? (() => DateTime.now().toUtc()),
         _session = instrument.startSession(level.requiredNotes) {
     _instrument.setTarget(level.requiredNotes.first);
   }
@@ -23,7 +25,8 @@ class LevelSessionFlow {
   final void Function(AnalyticsEvent event)? onAnalyticsEvent;
   final InstrumentInput _instrument;
   final LessonSession _session;
-  final DateTime _startedAt = DateTime.now().toUtc();
+  final DateTime Function() _now;
+  late final DateTime _startedAt = _now();
   bool _finished = false;
 
   bool get isComplete => _finished;
@@ -58,8 +61,10 @@ class LevelSessionFlow {
     _finished = true;
     final passed = _session.passes(level.successThreshold);
     final accuracy = _session.accuracy;
-    final durationSeconds =
-        DateTime.now().toUtc().difference(_startedAt).inSeconds;
+    final durationSeconds = _now().difference(_startedAt).inSeconds;
+    // Any completed run counts as practice (non-punitive — streak never lost
+    // for a failed level).
+    progress.recordPracticeDay(_now());
     onAnalyticsEvent?.call(
       AnalyticsEvent.practiceSession(
         childProfileId: progress.profileId,

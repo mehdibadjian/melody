@@ -31,8 +31,7 @@ void main() {
       expect(store.load(), isEmpty);
     });
 
-    test('append persists the event as JSON and load round-trips it',
-        () async {
+    test('append persists the event as JSON and load round-trips it', () async {
       final store = await makeStore();
       final event = sampleEvent();
 
@@ -63,8 +62,7 @@ void main() {
       expect(loaded[2].payload['levelId'], 'level-002-b');
     });
 
-    test('load survives app restarts (fresh store over same prefs)',
-        () async {
+    test('load survives app restarts (fresh store over same prefs)', () async {
       final store = await makeStore();
       await store.append(sampleEvent());
 

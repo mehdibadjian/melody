@@ -39,6 +39,24 @@ class PlayerProgress {
         _masteryHits = masteryHits,
         _masteryMisses = masteryMisses;
 
+  /// Deep copy so Riverpod can emit a fresh instance (in-place mutation never
+  /// notifies listeners). Copies every mutable collection.
+  PlayerProgress clone() {
+    return PlayerProgress._(
+      profileId: profileId,
+      stars: _stars,
+      noteCurrency: _noteCurrency,
+      currentStreak: _currentStreak,
+      lastPracticeDay: _lastPracticeDay,
+      lastChestClaimDay: _lastChestClaimDay,
+      dailyChestStreak: _dailyChestStreak,
+      completedLevels: Set<String>.from(_completedLevels),
+      ownedCosmetics: Set<String>.from(_ownedCosmetics),
+      masteryHits: Map<String, int>.from(_masteryHits),
+      masteryMisses: Map<String, int>.from(_masteryMisses),
+    );
+  }
+
   factory PlayerProgress.fromJson(Map<String, dynamic> json) {
     return PlayerProgress._(
       profileId: json['profileId'] as String? ?? 'child-local',
