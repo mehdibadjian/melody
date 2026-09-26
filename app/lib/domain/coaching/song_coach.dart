@@ -64,7 +64,11 @@ class SongCoach {
             notes: List.of(notes), index: 0, correctHits: 0, wrongAttempts: 0);
 
   /// Called once when the song is completed (fires exactly once).
-  final void Function()? onComplete;
+  void Function()? onComplete;
+
+  /// Called after every state change (correct, wrong, or silence frame) so a
+  /// controller/UI can republish. Receives no args; read [state].
+  void Function()? onStateChanged;
 
   SongCoachState _state;
 
@@ -89,6 +93,7 @@ class SongCoach {
         feedback: _state.feedback,
         detectedNote: null,
       );
+      onStateChanged?.call();
       return;
     }
 
@@ -105,6 +110,7 @@ class SongCoach {
       feedback: feedback,
       detectedNote: note,
     );
+    onStateChanged?.call();
 
     if (_state.isComplete && !_completed) {
       _completed = true;
