@@ -40,3 +40,16 @@ development_status:
   epic-1/evaluation-consistency: done
   epic-1/widget-tests: done
   epic-1/prd-document: done
+  epic-2: in-progress
+  epic-2/acoustic-pitch-feasibility: done
+  epic-2/pitch-detection-engine: done
+  epic-2/piano-layout-coaching: done
+  epic-2/content-schema-v2: done
+  epic-2/public-domain-song-library: done
+  epic-2/illustrated-keyboard: done
+  epic-2/song-coach: done
+  epic-2/pcm-decode-live-pipeline: done
+  epic-2/live-capture-seam: done
+  epic-2/acoustic-practice-screen: done
+  epic-2/play-mode-navigation: done
+  epic-2/on-device-validation: backlog
