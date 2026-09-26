@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/mehdibadjian/melody/compare/v1.5.2...v1.6.0) (2026-09-26)
+
+
+### Features
+
+* **acoustic:** real-keyboard listen & coach (PRD §9.2) ([88e38e7](https://github.com/mehdibadjian/melody/commit/88e38e7341ddf0869dfb36a3a8aef6d68ee8bb79))
+
 ## [1.5.2](https://github.com/mehdibadjian/melody/compare/v1.5.1...v1.5.2) (2026-09-26)
 
 
