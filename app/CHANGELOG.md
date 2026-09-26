@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/mehdibadjian/melody/compare/v1.2.1...v1.3.0) (2026-09-26)
+
+
+### Features
+
+* fill core gaps — persistence, audio, state management, widget decomposition ([#12](https://github.com/mehdibadjian/melody/issues/12)) ([be1356b](https://github.com/mehdibadjian/melody/commit/be1356b2948977435288a9d72b75fda2f1df302f))
+
 ## [1.2.1](https://github.com/mehdibadjian/melody/compare/v1.2.0...v1.2.1) (2026-09-25)
 
 
