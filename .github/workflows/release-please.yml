@@ -24,11 +24,18 @@ jobs:
       # GITHUB_TOKEN-created tags never fire `on: push: tags` downstream
       # (GitHub's recursion guard), so bridge to publish.yml via
       # repository_dispatch, which GITHUB_TOKEN is allowed to trigger.
+      #
+      # NOTE: this repo runs release-please in manifest mode with the package
+      # at path `app`, so the action emits PATH-SCOPED outputs
+      # (`app--release_created`, `app--tag_name`), NOT the root-level
+      # `release_created`. Reading the root output here kept the step
+      # permanently skipped, so no APK was ever attached (v1.5.0, v1.5.1).
+      # Path-scoped names contain `--`, so they must use bracket access.
       - name: Dispatch publish workflow for new release
-        if: steps.release.outputs.release_created == 'true'
+        if: steps.release.outputs['app--release_created'] == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.release.outputs.tag_name }}
+          TAG: ${{ steps.release.outputs['app--tag_name'] }}
         run: |
           gh api "repos/$GITHUB_REPOSITORY/dispatches" --input - <<EOF
           {"event_type":"publish-release","client_payload":{"tag":"$TAG"}}

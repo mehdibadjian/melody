@@ -104,5 +104,37 @@ void main() {
 
       expect(store.load(), isEmpty);
     });
+
+    test('append is bounded: keeps only the most recent maxEvents', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final store = AnalyticsStore(prefs, maxEvents: 3);
+
+      for (final id in ['a', 'b', 'c', 'd', 'e']) {
+        await store.append(sampleEvent(levelId: 'level-$id'));
+      }
+
+      final loaded = store.load();
+      expect(loaded, hasLength(3));
+      expect(loaded.map((e) => e.payload['levelId']),
+          ['level-c', 'level-d', 'level-e']);
+    });
+
+    test('bounded store still round-trips after a restart', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final store = AnalyticsStore(prefs, maxEvents: 2);
+      await store.append(sampleEvent(levelId: 'x'));
+      await store.append(sampleEvent(levelId: 'y'));
+      await store.append(sampleEvent(levelId: 'z'));
+
+      final reopened = AnalyticsStore(prefs, maxEvents: 2);
+      final loaded = reopened.load();
+      expect(loaded.map((e) => e.payload['levelId']), ['y', 'z']);
+    });
+
+    test('default maxEvents is 500 (bounded local buffer, not unbounded)',
+        () async {
+      final prefs = await SharedPreferences.getInstance();
+      expect(AnalyticsStore(prefs).maxEvents, 500);
+    });
   });
 }
