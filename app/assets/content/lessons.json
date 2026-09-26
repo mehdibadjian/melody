@@ -1,43 +1,211 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "lessons": [
     {
-      "id": "lesson-001",
-      "title": "First Notes",
+      "id": "song-hot-cross-buns",
+      "title": "Hot Cross Buns",
+      "songTitle": "Hot Cross Buns",
+      "genre": "nursery",
+      "attribution": "Traditional English nursery rhyme, public domain",
       "difficulty": "beginner",
       "levels": [
         {
-          "id": "level-001-a",
-          "name": "Three Friends",
+          "id": "hot-cross-buns-full",
+          "name": "Whole song",
           "type": "standard",
-          "requiredNotes": ["C4", "D4", "E4"],
-          "tempoBpm": 80,
-          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 2 },
-          "rewardPayout": { "stars": 3, "noteCurrency": 5 }
-        },
-        {
-          "id": "level-001-b",
-          "name": "Climbing Stairs",
-          "type": "standard",
-          "requiredNotes": ["C4", "D4", "E4", "F4", "G4"],
-          "tempoBpm": 90,
+          "requiredNotes": ["E4", "D4", "C4", "E4", "D4", "C4"],
+          "tempoBpm": 84,
           "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 4 },
+          "rewardPayout": { "stars": 3, "noteCurrency": 5 }
+        }
+      ]
+    },
+    {
+      "id": "song-mary-lamb",
+      "title": "Mary Had a Little Lamb",
+      "songTitle": "Mary Had a Little Lamb",
+      "genre": "nursery",
+      "attribution": "Traditional, public domain",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "mary-lamb-full",
+          "name": "First verse",
+          "type": "standard",
+          "requiredNotes": ["E4", "D4", "C4", "D4", "E4", "E4", "E4"],
+          "tempoBpm": 84,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 5 },
+          "rewardPayout": { "stars": 3, "noteCurrency": 5 }
+        }
+      ]
+    },
+    {
+      "id": "song-twinkle",
+      "title": "Twinkle Twinkle Little Star",
+      "songTitle": "Twinkle Twinkle Little Star",
+      "genre": "nursery",
+      "attribution": "Melody: 'Ah! vous dirai-je, maman' (traditional); words Jane Taylor (1806), public domain",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "twinkle-full",
+          "name": "Whole song",
+          "type": "standard",
+          "requiredNotes": ["C4", "C4", "G4", "G4", "A4", "A4", "G4", "F4", "F4", "E4", "E4", "D4", "D4", "C4"],
+          "tempoBpm": 84,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 10 },
           "rewardPayout": { "stars": 4, "noteCurrency": 6 }
         }
       ]
     },
     {
-      "id": "lesson-002",
-      "title": "Boss: Note Guardian",
+      "id": "song-au-clair",
+      "title": "Au Clair de la Lune",
+      "songTitle": "Au Clair de la Lune",
+      "genre": "folk",
+      "attribution": "Traditional French folk song (18th c.), public domain",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "au-clair-full",
+          "name": "First phrase",
+          "type": "standard",
+          "requiredNotes": ["C4", "C4", "C4", "D4", "E4", "D4", "C4", "E4", "D4", "D4", "C4"],
+          "tempoBpm": 80,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 8 },
+          "rewardPayout": { "stars": 4, "noteCurrency": 6 }
+        }
+      ]
+    },
+    {
+      "id": "song-frere-jacques",
+      "title": "Frère Jacques",
+      "songTitle": "Frère Jacques (Are You Sleeping)",
+      "genre": "folk",
+      "attribution": "Traditional French round, public domain",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "frere-jacques-full",
+          "name": "First verse",
+          "type": "standard",
+          "requiredNotes": ["C4", "D4", "E4", "C4", "C4", "D4", "E4", "C4", "E4", "F4", "G4", "E4", "F4", "G4"],
+          "tempoBpm": 88,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 10 },
+          "rewardPayout": { "stars": 4, "noteCurrency": 6 }
+        }
+      ]
+    },
+    {
+      "id": "song-row-boat",
+      "title": "Row, Row, Row Your Boat",
+      "songTitle": "Row, Row, Row Your Boat",
+      "genre": "folk",
+      "attribution": "Traditional American folk song, public domain",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "row-boat-full",
+          "name": "Whole song",
+          "type": "standard",
+          "requiredNotes": ["C4", "C4", "C4", "D4", "E4", "E4", "D4", "E4", "F4", "G4", "G4", "F4", "E4", "D4", "C4"],
+          "tempoBpm": 88,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 11 },
+          "rewardPayout": { "stars": 4, "noteCurrency": 6 }
+        }
+      ]
+    },
+    {
+      "id": "song-london-bridge",
+      "title": "London Bridge Is Falling Down",
+      "songTitle": "London Bridge Is Falling Down",
+      "genre": "folk",
+      "attribution": "Traditional English nursery rhyme, public domain",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "london-bridge-full",
+          "name": "First phrase",
+          "type": "standard",
+          "requiredNotes": ["G4", "A4", "G4", "F4", "E4", "F4", "G4"],
+          "tempoBpm": 90,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 5 },
+          "rewardPayout": { "stars": 3, "noteCurrency": 5 }
+        }
+      ]
+    },
+    {
+      "id": "song-jingle-bells",
+      "title": "Jingle Bells",
+      "songTitle": "Jingle Bells",
+      "genre": "holiday",
+      "attribution": "James Lord Pierpont (1857), public domain",
+      "difficulty": "beginner",
+      "levels": [
+        {
+          "id": "jingle-bells-chorus",
+          "name": "Chorus",
+          "type": "standard",
+          "requiredNotes": ["E4", "E4", "E4", "E4", "E4", "E4", "E4", "G4", "C4", "D4", "E4"],
+          "tempoBpm": 100,
+          "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 8 },
+          "rewardPayout": { "stars": 4, "noteCurrency": 6 }
+        }
+      ]
+    },
+    {
+      "id": "song-ode-to-joy",
+      "title": "Ode to Joy",
+      "songTitle": "Ode to Joy (Symphony No. 9)",
+      "genre": "classical",
+      "attribution": "Ludwig van Beethoven (1824), public domain",
+      "difficulty": "intermediate",
+      "levels": [
+        {
+          "id": "ode-to-joy-theme",
+          "name": "Main theme",
+          "type": "standard",
+          "requiredNotes": ["E4", "E4", "F4", "G4", "G4", "F4", "E4", "D4", "C4", "C4", "D4", "E4", "E4", "D4", "D4"],
+          "tempoBpm": 96,
+          "successThreshold": { "minAccuracy": 0.75, "minNotesHit": 11 },
+          "rewardPayout": { "stars": 6, "noteCurrency": 9 }
+        }
+      ]
+    },
+    {
+      "id": "song-when-saints",
+      "title": "When the Saints Go Marching In",
+      "songTitle": "When the Saints Go Marching In",
+      "genre": "spiritual",
+      "attribution": "Traditional American gospel/spiritual, public domain",
+      "difficulty": "intermediate",
+      "levels": [
+        {
+          "id": "when-saints-phrase",
+          "name": "Opening phrase",
+          "type": "standard",
+          "requiredNotes": ["C4", "E4", "F4", "G4", "C5", "C5", "G4", "E4", "C4"],
+          "tempoBpm": 100,
+          "successThreshold": { "minAccuracy": 0.75, "minNotesHit": 7 },
+          "rewardPayout": { "stars": 6, "noteCurrency": 9 }
+        }
+      ]
+    },
+    {
+      "id": "song-amazing-grace",
+      "title": "Amazing Grace",
+      "songTitle": "Amazing Grace",
+      "genre": "hymn",
+      "attribution": "Words John Newton (1779); melody traditional ('New Britain'), public domain",
       "difficulty": "advanced",
       "levels": [
         {
-          "id": "level-002-boss",
-          "name": "The Guardian",
-          "type": "boss_battle",
-          "requiredNotes": ["G4", "A4", "B4", "C5"],
-          "tempoBpm": 100,
-          "successThreshold": { "minAccuracy": 0.85, "minNotesHit": 3 },
+          "id": "amazing-grace-phrase",
+          "name": "First line",
+          "type": "standard",
+          "requiredNotes": ["G4", "C5", "E5", "C5", "E5", "D5", "C5"],
+          "tempoBpm": 80,
+          "successThreshold": { "minAccuracy": 0.8, "minNotesHit": 5 },
           "rewardPayout": { "stars": 8, "noteCurrency": 12 }
         }
       ]
