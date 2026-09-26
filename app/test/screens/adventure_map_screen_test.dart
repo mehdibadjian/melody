@@ -83,7 +83,13 @@ void main() {
 
     expect(find.text('First Notes'), findsOneWidget);
     expect(find.text('beginner'), findsOneWidget);
-    expect(find.byIcon(Icons.music_note), findsOneWidget);
+    // AppBar HUD also uses a music_note icon; the lesson tile's is size 36.
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Icon && w.icon == Icons.music_note && w.size == 36,
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('shows error message when content fails to load', (tester) async {
@@ -98,5 +104,24 @@ void main() {
 
     expect(find.textContaining('Could not load lessons:'), findsOneWidget);
     expect(find.textContaining('boom'), findsOneWidget);
+  });
+
+  testWidgets('daily chest button claims once and updates currency',
+      (tester) async {
+    final container = await makeContainer(
+      lessonsFuture: Future<ContentDocument>.value(testDoc),
+    );
+
+    addTearDown(container.dispose);
+    await tester.pumpWidget(buildApp(container: container));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Notes 0'), findsOneWidget);
+    expect(find.byKey(const Key('daily-chest-button')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('daily-chest-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Notes 2'), findsOneWidget);
   });
 }

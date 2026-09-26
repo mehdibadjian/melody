@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:melody_app/domain/analytics/analytics_store.dart';
 import 'package:melody_app/domain/audio/audio_engine.dart';
+import 'package:melody_app/domain/content/content_models.dart';
 import 'package:melody_app/domain/content/content_repository.dart';
 import 'package:melody_app/domain/gamification/player_progress.dart';
 import 'package:melody_app/domain/gamification/progress_store.dart';
@@ -24,23 +26,45 @@ class PlayerProgressNotifier extends StateNotifier<PlayerProgress> {
 
   final ProgressStore _store;
 
+  Future<void> _commit(PlayerProgress next) async {
+    state = next;
+    await _store.save(next);
+  }
+
   Future<void> save() async {
     await _store.save(state);
   }
 
   void applyLevelCompletion({
     required String levelId,
-    required dynamic payout,
+    required RewardPayout payout,
     required double accuracy,
   }) {
-    state.applyLevelCompletion(
+    final next = state.clone();
+    next.applyLevelCompletion(
       levelId: levelId,
       payout: payout,
       accuracy: accuracy,
     );
-    save();
+    _commit(next);
+  }
+
+  void claimDailyChest(DateTime day) {
+    final next = state.clone();
+    next.claimDailyChest(day);
+    _commit(next);
+  }
+
+  /// Adopts a progress object mutated during a play session (e.g. by
+  /// LevelSessionFlow) by re-emitting it as a fresh state instance.
+  void commitSessionProgress(PlayerProgress sessionProgress) {
+    _commit(sessionProgress.clone());
   }
 }
+
+final analyticsStoreProvider = Provider<AnalyticsStore>((ref) {
+  return AnalyticsStore(ref.watch(sharedPreferencesProvider));
+});
 
 final contentRepositoryProvider = Provider<ContentRepository>((ref) {
   return const ContentRepository();

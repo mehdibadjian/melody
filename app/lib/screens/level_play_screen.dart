@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melody_app/domain/content/content_models.dart';
+import 'package:melody_app/domain/gamification/player_progress.dart';
+import 'package:melody_app/domain/instrument/note_event.dart';
 import 'package:melody_app/domain/keyboard/keyboard_instrument.dart';
 import 'package:melody_app/domain/session/level_session_flow.dart';
 import 'package:melody_app/providers.dart';
@@ -18,18 +20,25 @@ class LevelPlayScreen extends ConsumerStatefulWidget {
 class _LevelPlayScreenState extends ConsumerState<LevelPlayScreen> {
   late final KeyboardInstrument _instrument;
   late final LevelSessionFlow _flow;
+
+  /// Working copy of player progress for this session; committed back to the
+  /// provider (as a fresh instance) when the run completes.
+  late final PlayerProgress _sessionProgress;
   int _submittedCount = 0;
 
   @override
   void initState() {
     super.initState();
     final audio = ref.read(audioEngineProvider);
-    final progress = ref.read(playerProgressProvider);
+    _sessionProgress = ref.read(playerProgressProvider).clone();
     _instrument = KeyboardInstrument(audio: audio);
     _flow = LevelSessionFlow(
       level: widget.level,
       instrument: _instrument,
-      progress: progress,
+      progress: _sessionProgress,
+      onAnalyticsEvent: (event) {
+        ref.read(analyticsStoreProvider).append(event);
+      },
     );
   }
 
@@ -41,10 +50,16 @@ class _LevelPlayScreenState extends ConsumerState<LevelPlayScreen> {
 
   void _onKeyTap(String note) {
     _instrument.press(note);
+    _flow.submit(
+      NoteEvent(note: note, timestampMs: DateTime.now().millisecondsSinceEpoch),
+    );
     _instrument.release(note);
     setState(() {
       _submittedCount++;
       if (_flow.isComplete) {
+        ref
+            .read(playerProgressProvider.notifier)
+            .commitSessionProgress(_sessionProgress);
         _showResultDialog();
       }
     });
@@ -71,6 +86,7 @@ class _LevelPlayScreenState extends ConsumerState<LevelPlayScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final progress = ref.watch(playerProgressProvider);
     final requiredNotes = widget.level.requiredNotes;
     final targetNote =
         requiredNotes[_submittedCount.clamp(0, requiredNotes.length - 1)];
@@ -81,6 +97,8 @@ class _LevelPlayScreenState extends ConsumerState<LevelPlayScreen> {
           final keyboardHeight = constraints.maxHeight * 0.35;
           return Column(
             children: [
+              ProgressHud(
+                  stars: progress.stars, noteCurrency: progress.noteCurrency),
               Expanded(
                 child: Center(
                   child: Column(
@@ -103,6 +121,33 @@ class _LevelPlayScreenState extends ConsumerState<LevelPlayScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Stars + note-currency readout shown during play (PRD §6 reward economy).
+class ProgressHud extends StatelessWidget {
+  const ProgressHud(
+      {super.key, required this.stars, required this.noteCurrency});
+
+  final int stars;
+  final int noteCurrency;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          const Icon(Icons.star, color: Colors.amber),
+          const SizedBox(width: 4),
+          Text('Stars $stars'),
+          const SizedBox(width: 16),
+          const Icon(Icons.music_note, color: Colors.deepPurple),
+          const SizedBox(width: 4),
+          Text('Notes $noteCurrency'),
+        ],
       ),
     );
   }
