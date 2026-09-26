@@ -117,5 +117,6 @@ jobs:
       - name: Attach to GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ needs.build-android.outputs.tag }}
         run: gh release upload "$TAG" dist/app-release.apk --clobber
