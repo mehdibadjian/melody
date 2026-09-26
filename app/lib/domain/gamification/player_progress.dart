@@ -4,22 +4,97 @@ import 'package:melody_app/domain/content/content_models.dart';
 /// accuracy, reward economy. Pure Dart; serialization lands with the
 /// backend-sync workstream.
 class PlayerProgress {
-  PlayerProgress.initial({this.profileId = 'child-local'});
+  PlayerProgress.initial({this.profileId = 'child-local'})
+      : _stars = 0,
+        _noteCurrency = 0,
+        _currentStreak = 0,
+        _lastPracticeDay = null,
+        _lastChestClaimDay = null,
+        _dailyChestStreak = 0,
+        _completedLevels = {},
+        _ownedCosmetics = {},
+        _masteryHits = {},
+        _masteryMisses = {};
+
+  PlayerProgress._({
+    required this.profileId,
+    required int stars,
+    required int noteCurrency,
+    required int currentStreak,
+    required DateOnly? lastPracticeDay,
+    required DateOnly? lastChestClaimDay,
+    required int dailyChestStreak,
+    required Set<String> completedLevels,
+    required Set<String> ownedCosmetics,
+    required Map<String, int> masteryHits,
+    required Map<String, int> masteryMisses,
+  })  : _stars = stars,
+        _noteCurrency = noteCurrency,
+        _currentStreak = currentStreak,
+        _lastPracticeDay = lastPracticeDay,
+        _lastChestClaimDay = lastChestClaimDay,
+        _dailyChestStreak = dailyChestStreak,
+        _completedLevels = completedLevels,
+        _ownedCosmetics = ownedCosmetics,
+        _masteryHits = masteryHits,
+        _masteryMisses = masteryMisses;
+
+  factory PlayerProgress.fromJson(Map<String, dynamic> json) {
+    return PlayerProgress._(
+      profileId: json['profileId'] as String? ?? 'child-local',
+      stars: json['stars'] as int? ?? 0,
+      noteCurrency: json['noteCurrency'] as int? ?? 0,
+      currentStreak: json['currentStreak'] as int? ?? 0,
+      lastPracticeDay: json['lastPracticeDay'] != null
+          ? DateOnly.fromString(json['lastPracticeDay'] as String)
+          : null,
+      lastChestClaimDay: json['lastChestClaimDay'] != null
+          ? DateOnly.fromString(json['lastChestClaimDay'] as String)
+          : null,
+      dailyChestStreak: json['dailyChestStreak'] as int? ?? 0,
+      completedLevels:
+          (json['completedLevels'] as List<dynamic>?)?.cast<String>().toSet() ??
+              {},
+      ownedCosmetics:
+          (json['ownedCosmetics'] as List<dynamic>?)?.cast<String>().toSet() ??
+              {},
+      masteryHits:
+          (json['masteryHits'] as Map<String, dynamic>?)?.cast<String, int>() ??
+              {},
+      masteryMisses: (json['masteryMisses'] as Map<String, dynamic>?)
+              ?.cast<String, int>() ??
+          {},
+    );
+  }
 
   /// Child profile identifier; replaced by a server-synced id when the
   /// backend-sync workstream (PRD §4) lands.
   final String profileId;
 
-  int _stars = 0;
-  int _noteCurrency = 0;
-  int _currentStreak = 0;
+  int _stars;
+  int _noteCurrency;
+  int _currentStreak;
   DateOnly? _lastPracticeDay;
   DateOnly? _lastChestClaimDay;
-  int _dailyChestStreak = 0;
-  final Set<String> _completedLevels = {};
-  final Set<String> _ownedCosmetics = {};
-  final Map<String, int> _masteryHits = {};
-  final Map<String, int> _masteryMisses = {};
+  int _dailyChestStreak;
+  final Set<String> _completedLevels;
+  final Set<String> _ownedCosmetics;
+  final Map<String, int> _masteryHits;
+  final Map<String, int> _masteryMisses;
+
+  Map<String, dynamic> toJson() => {
+        'profileId': profileId,
+        'stars': _stars,
+        'noteCurrency': _noteCurrency,
+        'currentStreak': _currentStreak,
+        'lastPracticeDay': _lastPracticeDay?.toString(),
+        'lastChestClaimDay': _lastChestClaimDay?.toString(),
+        'dailyChestStreak': _dailyChestStreak,
+        'completedLevels': _completedLevels.toList(),
+        'ownedCosmetics': _ownedCosmetics.toList(),
+        'masteryHits': Map<String, int>.from(_masteryHits),
+        'masteryMisses': Map<String, int>.from(_masteryMisses),
+      };
 
   static const masteryHitsRequired = 5;
 
@@ -118,9 +193,24 @@ class DateOnly {
         month = dt.month,
         day = dt.day;
 
+  DateOnly._(this.year, this.month, this.day);
+
+  factory DateOnly.fromString(String s) {
+    final parts = s.split('-');
+    return DateOnly._(
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+      int.parse(parts[2]),
+    );
+  }
+
   final int year;
   final int month;
   final int day;
+
+  @override
+  String toString() =>
+      '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
 
   bool isSameDay(DateOnly other) =>
       year == other.year && month == other.month && day == other.day;

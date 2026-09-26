@@ -18,6 +18,5 @@ class ContentRepository {
 
   ContentDocument parse(String raw) => ContentParser.parseDocument(raw);
 
-  String encode(ContentDocument doc) =>
-      jsonEncode({'schemaVersion': doc.schemaVersion, 'lessons': doc.lessons});
+  String encode(ContentDocument doc) => jsonEncode(doc.toJson());
 }
