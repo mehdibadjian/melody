@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2](https://github.com/mehdibadjian/melody/compare/v1.5.1...v1.5.2) (2026-09-26)
+
+
+### Bug Fixes
+
+* bound the local analytics buffer and repair the release APK dispatch ([#26](https://github.com/mehdibadjian/melody/issues/26)) ([c1e44ef](https://github.com/mehdibadjian/melody/commit/c1e44ef81771d9a79dee07f10631e428a6ef967e))
+
 ## [1.5.1](https://github.com/mehdibadjian/melody/compare/v1.5.0...v1.5.1) (2026-09-26)
 
 
