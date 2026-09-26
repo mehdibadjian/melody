@@ -22,6 +22,13 @@ class Lesson {
   final String title;
   final Difficulty difficulty;
   final List<Level> levels;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'difficulty': difficulty.name,
+        'levels': levels.map((l) => l.toJson()).toList(),
+      };
 }
 
 /// A playable level within a lesson.
@@ -45,6 +52,16 @@ class Level {
   final RewardPayout rewardPayout;
 
   bool get isBossBattle => type == LevelType.bossBattle;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'type': type == LevelType.bossBattle ? 'boss_battle' : 'standard',
+        'requiredNotes': requiredNotes,
+        'tempoBpm': tempoBpm,
+        'successThreshold': successThreshold.toJson(),
+        'rewardPayout': rewardPayout.toJson(),
+      };
 }
 
 /// What a player must achieve to complete a level.
@@ -59,6 +76,11 @@ class SuccessThreshold {
 
   /// Absolute minimum number of correct notes.
   final int minNotesHit;
+
+  Map<String, dynamic> toJson() => {
+        'minAccuracy': minAccuracy,
+        'minNotesHit': minNotesHit,
+      };
 }
 
 /// Rewards granted on level completion. Spendable on cosmetics only.
@@ -67,6 +89,11 @@ class RewardPayout {
 
   final int stars;
   final int noteCurrency;
+
+  Map<String, dynamic> toJson() => {
+        'stars': stars,
+        'noteCurrency': noteCurrency,
+      };
 }
 
 /// Root of an authored content document.
@@ -75,4 +102,9 @@ class ContentDocument {
 
   final int schemaVersion;
   final List<Lesson> lessons;
+
+  Map<String, dynamic> toJson() => {
+        'schemaVersion': schemaVersion,
+        'lessons': lessons.map((l) => l.toJson()).toList(),
+      };
 }
