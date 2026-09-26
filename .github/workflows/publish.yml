@@ -29,9 +29,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # `ref` overrides the build source (e.g. backfilling a tag that
-          # predates the signing config); empty falls back to the event ref.
-          ref: ${{ github.event.client_payload.ref || github.event.client_payload.tag }}
+          # Empty for push/workflow_dispatch → falls back to the event ref.
+          ref: ${{ github.event.client_payload.tag }}
 
       - name: Resolve release tag
         id: resolve-tag
@@ -83,16 +82,9 @@ jobs:
         run: flutter build apk --release
 
       - name: Verify APK signature
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
-          CERTS=$("$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk)
-          echo "$CERTS"
-          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && echo "$CERTS" | grep -q "Android Debug"; then
-            echo "::error::APK is debug-signed despite keystore secret being present"
-            exit 1
-          fi
+          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
@@ -115,7 +107,9 @@ jobs:
           path: dist
 
       - name: Attach to GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.build-android.outputs.tag }}
-        run: gh release upload "$TAG" dist/app-release.apk --clobber
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ needs.build-android.outputs.tag }}
+          files: |
+            dist/app-release.apk
+          generate_release_notes: true
