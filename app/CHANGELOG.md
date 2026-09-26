@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/mehdibadjian/melody/compare/v1.5.0...v1.5.1) (2026-09-26)
+
+
+### Bug Fixes
+
+* ship real audio — asset-backed engine with safe init ([#24](https://github.com/mehdibadjian/melody/issues/24)) ([98b5719](https://github.com/mehdibadjian/melody/commit/98b57191beb553ba5efa8425837559b4c86219ba))
+
 ## [1.5.0](https://github.com/mehdibadjian/melody/compare/v1.4.0...v1.5.0) (2026-09-26)
 
 
