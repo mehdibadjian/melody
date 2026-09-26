@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/mehdibadjian/melody/compare/v1.6.0...v1.6.1) (2026-09-26)
+
+
+### Bug Fixes
+
+* **android:** release APK build on Flutter 3.24.3 (pin record_android 1.3.3, minSdk 23) ([#30](https://github.com/mehdibadjian/melody/issues/30)) ([caa2c15](https://github.com/mehdibadjian/melody/commit/caa2c15452d16e3e5cc67e855c65d816d6be664e))
+
 ## [1.6.0](https://github.com/mehdibadjian/melody/compare/v1.5.2...v1.6.0) (2026-09-26)
 
 
