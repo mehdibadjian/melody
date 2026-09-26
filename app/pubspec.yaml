@@ -39,6 +39,7 @@ dependencies:
   meta: ^1.15.0
   audioplayers: ^6.4.0
   flutter_riverpod: ^2.6.1
+  record: ^6.1.2
 
 dev_dependencies:
   flutter_test:
