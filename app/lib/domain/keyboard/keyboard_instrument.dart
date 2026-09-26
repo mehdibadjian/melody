@@ -26,7 +26,10 @@ const chromaticNotes = [
 /// note events with a timing tolerance that scales with tempo.
 class KeyboardInstrument implements InstrumentInput {
   KeyboardInstrument(
-      {this.octaves = 2, int? timingToleranceMs, int tempoBpm = 90, AudioEngine? audio})
+      {this.octaves = 2,
+      int? timingToleranceMs,
+      int tempoBpm = 90,
+      AudioEngine? audio})
       : _fixedToleranceMs = timingToleranceMs,
         _tempoBpm = tempoBpm,
         _audio = audio {
