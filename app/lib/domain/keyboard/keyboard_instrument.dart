@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:melody_app/domain/audio/audio_engine.dart';
 import 'package:melody_app/domain/instrument/instrument_engine.dart';
 import 'package:melody_app/domain/instrument/note_event.dart';
 
@@ -25,9 +26,10 @@ const chromaticNotes = [
 /// note events with a timing tolerance that scales with tempo.
 class KeyboardInstrument implements InstrumentInput {
   KeyboardInstrument(
-      {this.octaves = 2, int? timingToleranceMs, int tempoBpm = 90})
+      {this.octaves = 2, int? timingToleranceMs, int tempoBpm = 90, AudioEngine? audio})
       : _fixedToleranceMs = timingToleranceMs,
-        _tempoBpm = tempoBpm {
+        _tempoBpm = tempoBpm,
+        _audio = audio {
     for (var octave = 0; octave < octaves; octave++) {
       for (final name in chromaticNotes) {
         _keys.add(KeyboardKey(note: '$name${4 + octave}'));
@@ -38,6 +40,7 @@ class KeyboardInstrument implements InstrumentInput {
   final int octaves;
   final int _tempoBpm;
   final int? _fixedToleranceMs;
+  final AudioEngine? _audio;
   final List<KeyboardKey> _keys = [];
   final Set<String> _pressed = {};
   final _controller = StreamController<NoteEvent>.broadcast();
@@ -60,6 +63,7 @@ class KeyboardInstrument implements InstrumentInput {
   void press(String note) {
     _pressed.add(note);
     _controller.add(NoteEvent(note: note, timestampMs: _nowMs()));
+    _audio?.playNote(note);
   }
 
   /// Releases a pressed key.
