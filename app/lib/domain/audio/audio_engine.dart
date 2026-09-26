@@ -1,3 +1,5 @@
+import 'package:audioplayers/audioplayers.dart';
+
 abstract interface class AudioEngine {
   Future<void> initialize();
   Future<void> playNote(String note);
@@ -26,6 +28,35 @@ class NoteFrequency {
   static double? of(String note) => _frequencies[note];
 }
 
+class AssetAudioEngine implements AudioEngine {
+  AssetAudioEngine({AudioPlayer? player}) : _player = player ?? AudioPlayer();
+
+  final AudioPlayer _player;
+  bool _initialized = false;
+
+  @override
+  bool get isInitialized => _initialized;
+
+  @override
+  Future<void> initialize() async {
+    await _player.setReleaseMode(ReleaseMode.stop);
+    _initialized = true;
+  }
+
+  @override
+  Future<void> playNote(String note) async {
+    if (!_initialized || NoteFrequency.of(note) == null) return;
+    await _player.stop();
+    await _player.play(AssetSource('audio/notes/${note.toLowerCase()}.wav'));
+  }
+
+  @override
+  Future<void> dispose() async {
+    _initialized = false;
+    await _player.dispose();
+  }
+}
+
 class SynthAudioEngine implements AudioEngine {
   bool _initialized = false;
   String? _lastPlayedNote;
@@ -42,7 +73,7 @@ class SynthAudioEngine implements AudioEngine {
 
   @override
   Future<void> playNote(String note) async {
-    if (!_initialized) return;
+    if (!_initialized || NoteFrequency.of(note) == null) return;
     _lastPlayedNote = note;
   }
 
