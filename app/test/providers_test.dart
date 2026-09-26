@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:melody_app/domain/audio/audio_engine.dart';
 import 'package:melody_app/domain/content/content_models.dart';
 import 'package:melody_app/domain/gamification/player_progress.dart';
 import 'package:melody_app/providers.dart';
@@ -104,6 +105,28 @@ void main() {
       expect(after.noteCurrency, 5);
       expect(after.currentStreak, 1);
       expect(after.masteryHits('C4'), 1);
+    });
+  });
+
+  group('audioEngineProvider', () {
+    test('builds the asset-backed engine (not the silent synth double)',
+        () async {
+      final container = await makeContainer();
+      addTearDown(container.dispose);
+
+      final engine = container.read(audioEngineProvider);
+      expect(engine, isA<AssetAudioEngine>());
+    });
+
+    test('reading the provider does not throw when audio is unavailable',
+        () async {
+      // audioplayers has no platform channel under flutter_test; a missing
+      // plugin must not crash provider initialization or reads.
+      final container = await makeContainer();
+      addTearDown(container.dispose);
+
+      expect(() => container.read(audioEngineProvider), returnsNormally);
+      await container.read(audioEngineProvider).playNote('C4');
     });
   });
 }
