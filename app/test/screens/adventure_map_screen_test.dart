@@ -99,4 +99,23 @@ void main() {
     expect(find.textContaining('Could not load lessons:'), findsOneWidget);
     expect(find.textContaining('boom'), findsOneWidget);
   });
+
+  testWidgets('daily chest button claims once and updates currency',
+      (tester) async {
+    final container = await makeContainer(
+      lessonsFuture: Future<ContentDocument>.value(testDoc),
+    );
+
+    addTearDown(container.dispose);
+    await tester.pumpWidget(buildApp(container: container));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Notes 0'), findsOneWidget);
+    expect(find.byKey(const Key('daily-chest-button')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('daily-chest-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Notes 2'), findsOneWidget);
+  });
 }
