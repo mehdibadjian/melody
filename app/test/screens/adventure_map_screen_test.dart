@@ -92,13 +92,15 @@ void main() {
 
     expect(find.text('First Notes'), findsOneWidget);
     expect(find.text('beginner'), findsOneWidget);
-    // AppBar HUD also uses a music_note icon; the lesson tile's is size 36.
-    expect(
-      find.byWidgetPredicate(
-        (w) => w is Icon && w.icon == Icons.music_note && w.size == 36,
-      ),
-      findsOneWidget,
-    );
+    // The tile is a quest card, not a plain ListTile: it renders the lesson's
+    // own difficulty badge and the reward it is worth before the tap.
+    expect(find.byKey(const Key('quest-badge-lesson-001')), findsOneWidget);
+    expect(find.byKey(const Key('lesson-tile-lesson-001')), findsOneWidget);
+    // 3 stars and 5 notes from the single level's payout.
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text('5'), findsOneWidget);
+    // No level cleared yet, so the progress ring is absent.
+    expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 
   testWidgets('shows error message when content fails to load', (tester) async {

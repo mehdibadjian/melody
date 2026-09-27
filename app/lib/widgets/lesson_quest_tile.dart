@@ -1,0 +1,478 @@
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:melody_app/domain/content/content_models.dart';
+import 'package:melody_app/domain/gamification/player_progress.dart';
+import 'package:melody_app/domain/piano/piano_layout.dart';
+import 'package:melody_app/theme/tama_theme.dart';
+import 'package:melody_app/widgets/illustrated_keyboard.dart';
+
+/// A lesson rendered as a quest card on the adventure map.
+///
+/// The map used to be a plain [ListTile] whose leading widget was a `music_note`
+/// icon for nine out of ten lessons: every song looked identical, so a child
+/// could not tell an easy tune from a boss battle, nor one they had already
+/// beaten from one they had not, without reading the small print. This card puts
+/// the same three facts into things that are readable at a glance:
+///
+///  * **Identity** — the badge colour and glyph come from the lesson's difficulty
+///    and genre, and the badge carries the song's own first key as a coloured
+///    note so two lessons never read as the same token.
+///  * **Progress** — a ring around the badge fills with the share of the
+///    lesson's levels the child has cleared, and the levels they own light up as
+///    pips below the title.
+///  * **Stakes** — the reward is shown as stars and notes before the tap, not
+///    only after, which is what makes a boss battle look worth attempting.
+///
+/// It stays a single tap target and keeps the `ListTile` keys the tests and
+/// screen readers already rely on.
+class LessonQuestTile extends StatelessWidget {
+  const LessonQuestTile({
+    super.key,
+    required this.lesson,
+    required this.progress,
+    required this.onTap,
+  });
+
+  final Lesson lesson;
+  final PlayerProgress progress;
+  final VoidCallback onTap;
+
+  /// Number of this lesson's levels the child has cleared.
+  int get clearedCount => lesson.levels
+      .where((l) => progress.completedLevelIds.contains(l.id))
+      .length;
+
+  /// 0..1 share of levels cleared; 0 for a lesson with no levels, which cannot
+  /// ship but must not divide by zero if one is authored.
+  double get fraction {
+    if (lesson.levels.isEmpty) return 0;
+    return clearedCount / lesson.levels.length;
+  }
+
+  bool get isCleared => clearedCount == lesson.levels.length;
+
+  bool get isBoss => lesson.levels.any((l) => l.isBossBattle);
+
+  /// The first note the song actually uses, as the badge glyph's letter, and
+  /// the colour that note's pitch class owns.
+  ({String letter, Color color}) get _anchor {
+    for (final level in lesson.levels) {
+      for (final note in level.requiredNotes) {
+        final midi = midiFromNote(note);
+        if (midi == null) continue;
+        return (
+          // Read the pitch class through octave 4 so the name never carries a
+          // negative octave: noteFromMidi(0) is 'C-1', and stripping digits
+          // from that leaves a stray minus sign.
+          letter: noteFromMidi((midi % 12) + 60).replaceAll(RegExp(r'\d'), ''),
+          color: IllustratedKeyboard.colorForNote(note),
+        );
+      }
+    }
+    // A level with no parseable notes cannot ship (the content validator
+    // rejects it), but the badge must never be blank.
+    return (letter: 'C', color: TamaColors.purple);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tint = _QuestTint.of(lesson.difficulty);
+    final cleared = isCleared;
+    final anchor = _anchor;
+
+    return Card(
+      margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: tint.border, width: cleared ? 2.5 : 1.5),
+      ),
+      color: tint.card,
+      child: InkWell(
+        key: Key('lesson-tile-${lesson.id}'),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _QuestBadge(
+                tint: tint,
+                letter: anchor.letter,
+                noteColor: anchor.color,
+                fraction: fraction,
+                cleared: cleared,
+                isBoss: isBoss,
+                badgeKey: Key('quest-badge-${lesson.id}'),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            lesson.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                        if (isBoss)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 6),
+                            child: Icon(
+                              Icons.local_fire_department,
+                              size: 20,
+                              color: TamaColors.rose,
+                              semanticLabel: 'Boss battle',
+                              key: Key('boss-${lesson.id}'),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    if (lesson.songTitle != lesson.title)
+                      Text(
+                        lesson.songTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: TamaColors.ink.withOpacity(0.75)),
+                      ),
+                    Text(
+                      lesson.difficulty.name,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: tint.pip,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _LevelPips(
+                      lesson: lesson,
+                      progress: progress,
+                      tint: tint,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _RewardStack(lesson: lesson, cleared: cleared),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Per-difficulty palette for a quest card.
+class _QuestTint {
+  const _QuestTint({
+    required this.top,
+    required this.bottom,
+    required this.card,
+    required this.border,
+    required this.pip,
+  });
+
+  final Color top;
+  final Color bottom;
+  final Color card;
+  final Color border;
+  final Color pip;
+
+  static const _beginner = _QuestTint(
+    top: TamaColors.emerald,
+    bottom: TamaColors.purple,
+    card: Color(0xFFFFFFFF),
+    border: TamaColors.emerald,
+    pip: TamaColors.emerald,
+  );
+
+  static const _intermediate = _QuestTint(
+    top: TamaColors.amber,
+    bottom: TamaColors.orange,
+    card: Color(0xFFFFFBF3),
+    border: TamaColors.amber,
+    pip: TamaColors.amber,
+  );
+
+  static const _advanced = _QuestTint(
+    top: TamaColors.purple,
+    bottom: TamaColors.pink,
+    card: Color(0xFFFBF6FF),
+    border: TamaColors.purple,
+    pip: TamaColors.purple,
+  );
+
+  static _QuestTint of(Difficulty difficulty) => switch (difficulty) {
+        Difficulty.beginner => _beginner,
+        Difficulty.intermediate => _intermediate,
+        Difficulty.advanced => _advanced,
+      };
+}
+
+/// The badge: gradient disc, note glyph, progress ring, and a crown when the
+/// whole lesson is beaten.
+class _QuestBadge extends StatelessWidget {
+  const _QuestBadge({
+    required this.tint,
+    required this.letter,
+    required this.noteColor,
+    required this.fraction,
+    required this.cleared,
+    required this.isBoss,
+    required this.badgeKey,
+  });
+
+  final _QuestTint tint;
+  final String letter;
+  final Color noteColor;
+  final double fraction;
+  final bool cleared;
+  final bool isBoss;
+
+  /// Unique so two lessons that happen to start on the same note do not share a
+  /// key (which would make `find.byKey` ambiguous in a widget test).
+  final Key badgeKey;
+
+  static const double _size = 58;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _size + 8,
+      height: _size + 8,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: _size,
+            height: _size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [tint.top, tint.bottom],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: tint.bottom.withOpacity(0.4),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                letter,
+                key: badgeKey,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  height: 1.0,
+                  // On a cleared badge the disc goes white so the stars/crown
+                  // read; the letter keeps the song's own colour there.
+                  color: cleared ? noteColor : Colors.white,
+                ),
+              ),
+            ),
+          ),
+          // Progress ring. Drawn only while there is something to show, so an
+          // untouched lesson is a clean disc rather than a grey "0%" halo.
+          if (fraction > 0)
+            IgnorePointer(
+              child: SizedBox(
+                width: _size + 8,
+                height: _size + 8,
+                child: CircularProgressIndicator(
+                  value: fraction,
+                  strokeWidth: 4,
+                  backgroundColor: tint.bottom.withOpacity(0.18),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    cleared ? TamaColors.amber : tint.bottom,
+                  ),
+                ),
+              ),
+            ),
+          if (cleared)
+            const Positioned(
+              right: -2,
+              top: -6,
+              child: Icon(
+                Icons.workspace_premium,
+                size: 22,
+                color: TamaColors.amber,
+                semanticLabel: 'Lesson complete',
+              ),
+            )
+          else if (isBoss)
+            Positioned(
+              left: -2,
+              top: -6,
+              child: Transform.rotate(
+                angle: -math.pi / 10,
+                child: const Icon(
+                  Icons.bolt,
+                  size: 20,
+                  color: TamaColors.rose,
+                  semanticLabel: 'Boss battle',
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One dot per level, filled when cleared; a boss level gets a diamond.
+class _LevelPips extends StatelessWidget {
+  const _LevelPips({
+    required this.lesson,
+    required this.progress,
+    required this.tint,
+  });
+
+  final Lesson lesson;
+  final PlayerProgress progress;
+  final _QuestTint tint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final level in lesson.levels)
+          Padding(
+            padding: const EdgeInsets.only(right: 5),
+            child: CustomPaint(
+              key: Key('pip-${level.id}'),
+              size: const Size(13, 13),
+              painter: _PipPainter(
+                filled: progress.completedLevelIds.contains(level.id),
+                diamond: level.isBossBattle,
+                color: tint.pip,
+              ),
+            ),
+          ),
+        const SizedBox(width: 2),
+        Text(
+          '${lesson.levels.where((l) => progress.completedLevelIds.contains(l.id)).length}'
+          '/${lesson.levels.length}',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: TamaColors.ink.withOpacity(0.65),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PipPainter extends CustomPainter {
+  const _PipPainter({
+    required this.filled,
+    required this.diamond,
+    required this.color,
+  });
+
+  final bool filled;
+  final bool diamond;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8;
+    final centre = size.center(Offset.zero);
+    final radius = size.width / 2 - 1;
+    paint.color = filled ? color : color.withOpacity(0.35);
+    if (filled) {
+      paint.style = PaintingStyle.fill;
+      paint.color = color;
+    }
+    if (diamond) {
+      final path = Path()
+        ..moveTo(centre.dx, centre.dy - radius)
+        ..lineTo(centre.dx + radius, centre.dy)
+        ..lineTo(centre.dx, centre.dy + radius)
+        ..lineTo(centre.dx - radius, centre.dy)
+        ..close();
+      canvas.drawPath(path, paint);
+    } else {
+      canvas.drawCircle(centre, radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PipPainter old) =>
+      old.filled != filled || old.diamond != diamond || old.color != color;
+}
+
+/// Stars and note-currency the lesson is worth, before the tap.
+class _RewardStack extends StatelessWidget {
+  const _RewardStack({required this.lesson, required this.cleared});
+
+  final Lesson lesson;
+  final bool cleared;
+
+  int get stars =>
+      lesson.levels.fold(0, (sum, l) => sum + l.rewardPayout.stars);
+  int get notes =>
+      lesson.levels.fold(0, (sum, l) => sum + l.rewardPayout.noteCurrency);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.star, size: 15, color: TamaColors.amber),
+            const SizedBox(width: 2),
+            Text('$stars',
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+          ],
+        ),
+        const SizedBox(height: 3),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.music_note, size: 15, color: TamaColors.purple),
+            const SizedBox(width: 2),
+            Text('$notes',
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+          ],
+        ),
+        if (cleared)
+          Padding(
+            padding: const EdgeInsets.only(top: 3),
+            child: Text(
+              'done',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: TamaColors.emerald.withOpacity(0.9),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
