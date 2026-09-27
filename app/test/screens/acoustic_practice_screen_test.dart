@@ -119,7 +119,7 @@ void main() {
     expect(msg.data, contains('too high'));
   });
 
-  testWidgets('playing the whole song completes and celebrates',
+  testWidgets('playing the whole song celebrates with a non-blocking toast',
       (tester) async {
     await tester.pumpWidget(await app(mic));
     await tester.pumpAndSettle();
@@ -129,8 +129,19 @@ void main() {
       await play(tester, note);
     }
 
-    expect(find.byKey(const Key('song-complete')), findsOneWidget);
+    // Result arrives as a toast, never a full-screen takeover or modal dialog.
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byKey(const Key('result-toast')), findsOneWidget);
     expect(find.textContaining('You played it'), findsOneWidget);
+    // The inline completion state is a calm resting indicator, not a popup.
+    expect(find.byKey(const Key('song-complete')), findsOneWidget);
+
+    // Settle the toast's entrance so its 3s auto-dismiss timer is scheduled,
+    // then advance past it so teardown is clean.
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('result-toast')), findsNothing);
   });
 
   testWidgets('progress strip shows position through the song', (tester) async {

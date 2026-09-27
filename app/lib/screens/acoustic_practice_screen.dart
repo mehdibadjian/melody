@@ -80,6 +80,24 @@ class _AcousticPracticeScreenState
         .commitSessionProgress(_sessionProgress);
     // Stop listening once done so the mic light goes off.
     _controller.stopListening();
+    // Celebrate non-blockingly: a toast, never a full-screen takeover or modal.
+    _showResultToast();
+  }
+
+  /// Non-blocking, auto-dismissing toast (mirrors LevelPlayScreen). The result
+  /// is delivered as a toast so the child is never interrupted by a popup.
+  void _showResultToast() {
+    final hits = _controller.snapshot.coach.correctHits;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          key: const Key('result-toast'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+          content: Text('You played it! $hits notes — nice work!'),
+        ),
+      );
   }
 
   @override
@@ -187,15 +205,18 @@ class _CoachingPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     if (snap.complete) {
+      // Non-blocking inline "all done" state. The celebratory result is
+      // delivered as a toast (see _showResultToast), so this is just a calm
+      // resting indicator — never a full-screen takeover or popup.
       return Center(
         child: Column(
           key: const Key('song-complete'),
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.celebration, size: 72, color: Colors.amber),
+            const Icon(Icons.check_circle, size: 40, color: Colors.green),
             const SizedBox(height: 8),
-            Text('You played it!', style: theme.textTheme.headlineMedium),
-            Text('${snap.coach.correctHits} notes — nice work!'),
+            Text('All done — tap a lesson to play again',
+                style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
           ],
         ),
       );
