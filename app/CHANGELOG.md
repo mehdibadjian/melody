@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/mehdibadjian/melody/compare/v1.8.1...v1.9.0) (2026-09-27)
+
+
+### Features
+
+* **demo:** listen-first player with metronome, on both play screens ([#47](https://github.com/mehdibadjian/melody/issues/47)) ([d0c8683](https://github.com/mehdibadjian/melody/commit/d0c8683342926d93652fabe44a30794e917cf51a))
+
 ## [1.8.1](https://github.com/mehdibadjian/melody/compare/v1.8.0...v1.8.1) (2026-09-27)
 
 
