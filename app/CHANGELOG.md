@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/mehdibadjian/melody/compare/v1.7.0...v1.7.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* **keyboard:** C-anchored key window, landscape layout, gamified quest cards ([#41](https://github.com/mehdibadjian/melody/issues/41)) ([9cb213c](https://github.com/mehdibadjian/melody/commit/9cb213c9a786c0fc143482edb35d00f786d09293))
+
 ## [1.7.0](https://github.com/mehdibadjian/melody/compare/v1.6.3...v1.7.0) (2026-09-27)
 
 
