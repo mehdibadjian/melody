@@ -60,28 +60,30 @@ class _LevelPlayScreenState extends ConsumerState<LevelPlayScreen> {
         ref
             .read(playerProgressProvider.notifier)
             .commitSessionProgress(_sessionProgress);
-        _showResultDialog();
+        _showResultToast();
       }
     });
   }
 
-  void _showResultDialog() {
+  /// Non-blocking, auto-dismissing toast (was a modal AlertDialog that forced a
+  /// tap-through). Keeps the child in the flow instead of interrupting it.
+  void _showResultToast() {
     final result = _flow.result!;
-    showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(result.passed ? 'You did it!' : 'Nice try!'),
-        content: Text(result.passed
-            ? 'You earned ${result.starsAwarded} stars!'
-            : 'Accuracy ${(result.accuracy * 100).round()}% — try again, you got this!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          key: const Key('result-toast'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+          content: Text(
+            result.passed
+                ? 'You did it! You earned ${result.starsAwarded} stars!'
+                : 'Nice try! Accuracy ${(result.accuracy * 100).round()}% — '
+                    'try again, you got this!',
           ),
-        ],
-      ),
-    );
+        ),
+      );
   }
 
   @override

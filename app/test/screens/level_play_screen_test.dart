@@ -42,11 +42,20 @@ void main() {
     );
   }
 
-  Future<void> playPerfectRun(WidgetTester tester) async {
-    for (final note in ['C4', 'D4', 'E4']) {
+  Future<void> playNotes(WidgetTester tester, List<String> notes) async {
+    for (final note in notes) {
       await tester.tap(find.text(note).last);
       await tester.pumpAndSettle();
     }
+  }
+
+  Future<void> playPerfectRun(WidgetTester tester) =>
+      playNotes(tester, ['C4', 'D4', 'E4']);
+
+  /// Drains the result toast's 3s auto-dismiss timer so teardown is clean.
+  Future<void> dismissToast(WidgetTester tester) async {
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
   }
 
   group('LevelPlayScreen progress HUD', () {
@@ -63,14 +72,51 @@ void main() {
 
       await playPerfectRun(tester);
 
-      // Result dialog appears; HUD must already reflect the payout.
-      expect(find.text('You did it!'), findsOneWidget);
+      // Result toast appears; HUD must already reflect the payout.
+      expect(find.byKey(const Key('result-toast')), findsOneWidget);
       expect(find.text('Stars 3'), findsOneWidget);
       expect(find.text('Notes 5'), findsOneWidget);
 
-      await tester.tap(find.text('OK'));
-      await tester.pumpAndSettle();
+      await dismissToast(tester);
       expect(find.text('Stars 3'), findsOneWidget);
+    });
+  });
+
+  group('LevelPlayScreen result toast', () {
+    testWidgets('passing run shows a non-blocking, auto-dismissing toast',
+        (tester) async {
+      final container = await makeContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(buildScreen(container));
+      await tester.pumpAndSettle();
+      await playPerfectRun(tester);
+
+      // No modal dialog and no tap-through button; the toast is non-blocking
+      // so the child can keep playing straight away.
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.text('OK'), findsNothing);
+      expect(find.textContaining('You did it!'), findsOneWidget);
+
+      await dismissToast(tester);
+      expect(find.byKey(const Key('result-toast')), findsNothing);
+    });
+
+    testWidgets('failing run toasts encouragement instead of a dialog',
+        (tester) async {
+      final container = await makeContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(buildScreen(container));
+      await tester.pumpAndSettle();
+      await playNotes(tester, ['F4', 'F4', 'F4']);
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.textContaining('Nice try!'), findsOneWidget);
+      expect(find.textContaining('Accuracy 0%'), findsOneWidget);
+
+      await dismissToast(tester);
+      expect(find.byKey(const Key('result-toast')), findsNothing);
     });
   });
 
@@ -93,6 +139,8 @@ void main() {
         events.where((e) => e.type == AnalyticsEventType.levelCompleted),
         hasLength(1),
       );
+
+      await dismissToast(tester);
     });
   });
 }
