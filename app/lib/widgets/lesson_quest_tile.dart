@@ -10,10 +10,11 @@ import 'package:melody_app/widgets/illustrated_keyboard.dart';
 /// A lesson rendered as a quest card on the adventure map.
 ///
 /// The map used to be a plain [ListTile] whose leading widget was the same
-/// `music_note` icon for **all eleven** shipped lessons (no boss levels exist
-/// yet, so the `local_fire_department` branch never fired either). Every song
-/// looked identical, so a child could not tell an easy tune from a hard one, or
-/// one they had beaten from one they had not, without reading the small print.
+/// `music_note` icon for **all eleven** lessons shipped at the time — and there
+/// were no boss levels in that content either, so the `local_fire_department`
+/// branch never fired. Every song looked identical, so a child could not tell an
+/// easy tune from a hard one, or one they had beaten from one they had not,
+/// without reading the small print.
 /// This card puts those facts into things that read at a glance:
 ///
 ///  * **Identity** — the card draws the song's own opening phrase as a coloured

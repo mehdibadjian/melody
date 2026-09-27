@@ -169,12 +169,18 @@ A children's music-learning app (ages 6–10) specified via a PRD
   acoustic_practice_controller), `piano/piano_layout.dart` (note↔midi,
   61/76/88-key — only 61 renders today). UI: `widgets/illustrated_keyboard.dart`,
   `screens/acoustic_practice_screen.dart`; navigation via a play-mode chooser in
-  `screens/adventure_map_screen.dart` (`PlayMode.realKeyboard` / `.onScreen`).
-  `providers.dart` exposes `micCaptureProvider`.
+  `screens/adventure_map_screen.dart` (`PlayMode.realKeyboard` / `.onScreen`),
+  which also lists the arrangements when a lesson has more than one level.
 - Content is schema **v2** (`ContentParser` still accepts v1): `Lesson` carries
   optional `songTitle`/`genre`/`attribution`; `Level.noteRange` derives the
-  MIDI span. `assets/content/lessons.json` ships 11 public-domain songs across
-  6 genres; `shipped_song_library_test.dart` guards board-fit + bundled audio.
+  MIDI span. `assets/content/lessons.json` ships 12 songs (14 levels) across 7
+  genres; `shipped_song_library_test.dart` guards board-fit + bundled audio.
+- **The library is no longer public-domain-only.** *GOLDEN* (HUNTR/X, from
+  *KPop Demon Hunters*, 2025) is a copyrighted commercial release added as a
+  three-level song; its `attribution` says the rights are not cleared. Nothing
+  in the code enforces a licensing policy, so **treat shipping it publicly as an
+  open IP decision by the owner, not a merged-without-comment default** — this
+  app is COPPA/GDPR-K scoped and aimed at children.
 - `record` is pinned to `^6.1.2` (resolves 6.2.1) to match Flutter 3.24.3 /
   Dart 3.5.3; 7.x requires a newer toolchain. `record_android` is additionally
   pinned to **1.3.3** via `dependency_overrides` — 1.4.0+ needs Flutter 3.27+

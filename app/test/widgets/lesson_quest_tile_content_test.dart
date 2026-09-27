@@ -9,11 +9,12 @@ import 'package:melody_app/domain/gamification/player_progress.dart';
 import 'package:melody_app/domain/piano/piano_layout.dart';
 import 'package:melody_app/widgets/lesson_quest_tile.dart';
 
-/// Guards the point of the quest card: the eleven shipped lessons must be
+/// Guards the point of the quest card: every shipped lesson must be
 /// distinguishable *without reading text*.
 ///
 /// The reported problem was "icons on home page are very boring" — nine (in
-/// fact all eleven) lessons drew the same `music_note` glyph. A first cut of the
+/// fact all eleven, the count before GOLDEN was added) lessons drew the same
+/// `music_note` glyph. A first cut of the
 /// redesign keyed the badge on difficulty tint plus the song's first note and
 /// its payout, and checking that against the real content showed it had not
 /// actually fixed anything: four beginner songs start on C4 and pay 4 stars/6

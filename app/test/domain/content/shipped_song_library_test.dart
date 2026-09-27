@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:melody_app/domain/audio/audio_engine.dart';
 import 'package:melody_app/domain/content/content_parser.dart';
 import 'package:melody_app/domain/piano/piano_layout.dart';
 import 'package:test/test.dart';
@@ -9,19 +10,20 @@ import 'package:test/test.dart';
 /// Content authors edit JSON, not code, so this is the safety net that turns a
 /// bad song file into a failing CI run instead of a broken lesson at runtime
 /// (PRD §4.1: "invalid content fails loudly at parse time"). It also keeps the
-/// library playable on the v1 hardware: a 61-key board, natural notes only
-/// (the bundled per-note WAVs cover naturals C4–G5), and a recognisable range.
+/// library playable on the v1 hardware: a 61-key board, a bundled WAV per note,
+/// and a recognisable range.
 void main() {
   final raw = File('assets/content/lessons.json').readAsStringSync();
   final doc = ContentParser.parseDocument(raw);
   final board = KeyboardLayout.sixtyOne;
 
-  /// Note names that have a bundled WAV in assets/audio/notes/.
+  /// Note names that have a bundled WAV in assets/audio/notes/, decoded through
+  /// [NoteAsset] so `fs4.wav` reads back as `F#4` rather than `FS4`.
   final playableAudio = Directory('assets/audio/notes')
       .listSync()
       .map((f) => f.path.split(Platform.pathSeparator).last)
       .where((n) => n.endsWith('.wav'))
-      .map((n) => n.substring(0, n.length - 4).toUpperCase())
+      .map(NoteAsset.noteNameFromFile)
       .toSet();
 
   test('shipped library parses as schema v2 with multiple songs', () {
@@ -69,26 +71,34 @@ void main() {
   });
 
   test('every song is recognisable length (>= 4 notes) and non-punitive', () {
+    // Checks every arrangement, not just the first: the library gained a
+    // multi-level song, so a levels.first-only guard would leave the later
+    // arrangements unverified.
     for (final lesson in doc.lessons) {
-      final level = lesson.levels.first;
-      expect(level.requiredNotes.length, greaterThanOrEqualTo(4),
-          reason: '${lesson.id} is too short to be a recognisable song');
-      // minNotesHit must be achievable (never above the note count).
-      expect(level.successThreshold.minNotesHit,
-          lessThanOrEqualTo(level.requiredNotes.length));
-      expect(level.successThreshold.minAccuracy, inInclusiveRange(0.0, 1.0));
+      for (final level in lesson.levels) {
+        expect(level.requiredNotes.length, greaterThanOrEqualTo(4),
+            reason: '${level.id} is too short to be a recognisable phrase');
+        // minNotesHit must be achievable (never above the note count).
+        expect(level.successThreshold.minNotesHit,
+            lessThanOrEqualTo(level.requiredNotes.length),
+            reason: '${level.id} asks for more hits than it has notes');
+        expect(level.successThreshold.minAccuracy, inInclusiveRange(0.0, 1.0));
+      }
     }
   });
 
-  test('every song sits inside a comfortable 1.5-octave span', () {
+  test('the entry arrangement sits inside a comfortable 1.5-octave span', () {
+    // Only the first level is beginner-gated: it is what the app selects for a
+    // fresh player. Later arrangements may widen on purpose, but they still
+    // have to fit the guide keyboard, which shows a C-to-C window.
     for (final lesson in doc.lessons) {
       final range = lesson.levels.first.noteRange;
       expect(range.isEmpty, isFalse,
           reason: '${lesson.id} has no parseable notes');
       final span = midiFromNote(range.high!)! - midiFromNote(range.low!)!;
       expect(span, lessThanOrEqualTo(18),
-          reason:
-              '${lesson.id} spans $span semitones — too wide for a beginner');
+          reason: '${lesson.id} spans $span semitones — too wide for a '
+              'beginner, and it is the arrangement the app opens with');
     }
   });
 }

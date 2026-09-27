@@ -67,6 +67,54 @@ void main() {
     ],
   );
 
+  /// A song with three arrangements, which is what the picker exists for. Kept
+  /// as a local fixture rather than read from `lessons.json` so the routing
+  /// assertions do not silently change when an author edits content.
+  const songDoc = ContentDocument(
+    schemaVersion: 2,
+    lessons: [
+      Lesson(
+        id: 'song-golden',
+        title: 'GOLDEN',
+        difficulty: Difficulty.beginner,
+        songTitle: 'GOLDEN',
+        genre: 'pop',
+        levels: [
+          Level(
+            id: 'golden-beginner',
+            name: 'Beginner - right-hand melody',
+            type: LevelType.standard,
+            requiredNotes: ['G4', 'A4', 'B4'],
+            tempoBpm: 92,
+            successThreshold:
+                SuccessThreshold(minAccuracy: 0.7, minNotesHit: 2),
+            rewardPayout: RewardPayout(stars: 3, noteCurrency: 5),
+          ),
+          Level(
+            id: 'golden-medium',
+            name: 'Medium - chorus lift',
+            type: LevelType.standard,
+            requiredNotes: ['D5', 'E5', 'G5'],
+            tempoBpm: 108,
+            successThreshold:
+                SuccessThreshold(minAccuracy: 0.75, minNotesHit: 2),
+            rewardPayout: RewardPayout(stars: 4, noteCurrency: 6),
+          ),
+          Level(
+            id: 'golden-hard',
+            name: 'Hard - the full anthem',
+            type: LevelType.bossBattle,
+            requiredNotes: ['F#4', 'D6'],
+            tempoBpm: 120,
+            successThreshold:
+                SuccessThreshold(minAccuracy: 0.75, minNotesHit: 1),
+            rewardPayout: RewardPayout(stars: 6, noteCurrency: 9),
+          ),
+        ],
+      ),
+    ],
+  );
+
   testWidgets('shows loading indicator while content loads', (tester) async {
     final completer = Completer<ContentDocument>();
     final container = await makeContainer(lessonsFuture: completer.future);
@@ -180,6 +228,119 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(LevelPlayScreen), findsOneWidget);
+    });
+
+    testWidgets('a single-level song shows no arrangement picker',
+        (tester) async {
+      final container = await makeContainer(
+        lessonsFuture: Future<ContentDocument>.value(testDoc),
+      );
+      await openChooser(tester, container);
+
+      // The picker is conditional on having a choice to make; a song with one
+      // arrangement must not gain a row of buttons that do nothing.
+      expect(find.byType(ActionChip), findsNothing);
+      expect(find.text('Three Friends'), findsNothing);
+    });
+  });
+
+  group('multi-level arrangement picker', () {
+    Future<void> openChooser(
+        WidgetTester tester, ProviderContainer container) async {
+      addTearDown(container.dispose);
+      await tester.pumpWidget(buildApp(container: container));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('GOLDEN'));
+      await tester.pumpAndSettle();
+    }
+
+    /// The sheet is scrollable, so on a short viewport a mode row can sit below
+    /// the fold; scroll it into view rather than tapping blind.
+    Future<void> tapMode(WidgetTester tester, Key key) async {
+      await tester.ensureVisible(find.byKey(key));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(key));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('adding arrangements does not overflow the sheet',
+        (tester) async {
+      // The reported landscape bug was a sheet-sized Column that could not
+      // grow. Three chips plus two rows must stay scrollable, not overflow.
+      tester.view.physicalSize = const Size(640, 400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final container = await makeContainer(
+        lessonsFuture: Future<ContentDocument>.value(songDoc),
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(buildApp(container: container));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('GOLDEN'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(const Key('level-choice-golden-hard')), findsOneWidget);
+    });
+
+    testWidgets('offers every arrangement and defaults to the first',
+        (tester) async {
+      final container = await makeContainer(
+        lessonsFuture: Future<ContentDocument>.value(songDoc),
+      );
+      await openChooser(tester, container);
+
+      for (final level in songDoc.lessons.single.levels) {
+        expect(find.byKey(Key('level-choice-${level.id}')), findsOneWidget,
+            reason: '${level.id} has no picker chip');
+      }
+      expect(
+        find.widgetWithText(ActionChip, 'Beginner - right-hand melody'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('plays the selected arrangement, not always the first',
+        (tester) async {
+      final container = await makeContainer(
+        lessonsFuture: Future<ContentDocument>.value(songDoc),
+      );
+      await openChooser(tester, container);
+
+      await tester.tap(find.byKey(const Key('level-choice-golden-hard')));
+      await tester.pumpAndSettle();
+      await tapMode(tester, const Key('play-mode-on-screen'));
+
+      final screen =
+          tester.widget<LevelPlayScreen>(find.byType(LevelPlayScreen));
+      expect(screen.level.id, 'golden-hard',
+          reason: 'the picker selection was ignored in favour of levels.first');
+    });
+
+    testWidgets('preselects the first uncleared arrangement', (tester) async {
+      final container = await makeContainer(
+        lessonsFuture: Future<ContentDocument>.value(songDoc),
+      );
+      container.read(playerProgressProvider.notifier).applyLevelCompletion(
+            levelId: 'golden-beginner',
+            payout: songDoc.lessons.single.levels.first.rewardPayout,
+            accuracy: 0.9,
+          );
+      await openChooser(tester, container);
+      await tester.pumpAndSettle();
+
+      final selected = tester.widget<ActionChip>(
+          find.byKey(const Key('level-choice-golden-medium')));
+      expect(selected.backgroundColor, isNot(Colors.transparent),
+          reason: 'a cleared beginner should resume at medium');
+
+      await tapMode(tester, const Key('play-mode-on-screen'));
+      expect(
+        tester.widget<LevelPlayScreen>(find.byType(LevelPlayScreen)).level.id,
+        'golden-medium',
+      );
     });
   });
 }
