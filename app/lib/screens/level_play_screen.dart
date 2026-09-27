@@ -6,6 +6,7 @@ import 'package:melody_app/domain/instrument/note_event.dart';
 import 'package:melody_app/domain/keyboard/keyboard_instrument.dart';
 import 'package:melody_app/domain/session/level_session_flow.dart';
 import 'package:melody_app/providers.dart';
+import 'package:melody_app/theme/tama_theme.dart';
 import '../widgets/piano_keyboard.dart';
 
 class LevelPlayScreen extends ConsumerStatefulWidget {
@@ -142,11 +143,11 @@ class ProgressHud extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const Icon(Icons.star, color: Colors.amber),
+          const Icon(Icons.star, color: TamaColors.amber),
           const SizedBox(width: 4),
           Text('Stars $stars'),
           const SizedBox(width: 16),
-          const Icon(Icons.music_note, color: Colors.deepPurple),
+          const Icon(Icons.music_note, color: TamaColors.purple),
           const SizedBox(width: 4),
           Text('Notes $noteCurrency'),
         ],

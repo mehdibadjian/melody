@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!--
+    Tama Melody app icon.
+
+    Same character family as Tama-Tama (sibling repo
+    mehdibadjian/tama-tama, assets/tama-tama.svg): pink pet hatching out of a
+    shell on the tama-blue sky, purple sparkles, ink eyes. The differences are
+    the music identity — the shell is a piano keyboard and the pet is singing an
+    eighth note.
+
+    Palette is the Tama palette, verbatim from tama-tama/app/globals.css.
+    This file is the master vector; the platform PNGs under app/{android,ios,
+    macos,web,windows} are rendered from it. See docs/brand/README.md.
+  -->
+
+  <defs>
+    <clipPath id="shell">
+      <path d="M 90 320 L 140 270 L 190 330 L 256 260 L 322 330 L 372 270 L 422 320 L 410 400 Q 256 460 102 400 Z" />
+    </clipPath>
+  </defs>
+
+  <rect width="512" height="512" rx="120" fill="#7DD3FC" />
+
+  <!-- Purple sparkles, upper-left, as in Tama-Tama. -->
+  <g fill="#A855F7">
+    <path d="M 120 150 Q 140 150 140 130 Q 140 150 160 150 Q 140 150 140 170 Q 140 150 120 150 Z" />
+    <path d="M 150 210 Q 162 210 162 198 Q 162 210 174 210 Q 162 210 162 222 Q 162 210 150 210 Z" />
+  </g>
+
+  <!-- The note the pet is singing: purple stem-and-flag, pink head. -->
+  <g>
+    <path d="M 372 116 L 372 208" fill="none" stroke="#A855F7" stroke-width="16" stroke-linecap="round" />
+    <path d="M 372 116 Q 416 126 412 166 Q 400 142 372 140 Z" fill="#A855F7" />
+    <ellipse cx="350" cy="212" rx="26" ry="20" fill="#FF8EAF" stroke="#A855F7" stroke-width="10" transform="rotate(-18 350 212)" />
+  </g>
+
+  <!-- Pink pet body. -->
+  <circle cx="256" cy="270" r="140" fill="#FF8EAF" stroke="#A855F7" stroke-width="12" />
+
+  <!-- Eyes. -->
+  <circle cx="206" cy="240" r="14" fill="#334155" />
+  <circle cx="306" cy="240" r="14" fill="#334155" />
+  <circle cx="212" cy="234" r="5" fill="#FAFAFA" />
+  <circle cx="312" cy="234" r="5" fill="#FAFAFA" />
+
+  <!-- Blush. -->
+  <ellipse cx="180" cy="255" rx="12" ry="8" fill="#F43F5E" opacity="0.4" />
+  <ellipse cx="332" cy="255" rx="12" ry="8" fill="#F43F5E" opacity="0.4" />
+
+  <!-- Open, singing mouth. -->
+  <path d="M 240 262 Q 256 288 272 262 Q 256 272 240 262 Z" fill="#334155" />
+
+  <!-- Shell → piano keyboard: white keys, ink dividers, ink black keys. -->
+  <g clip-path="url(#shell)">
+    <path d="M 90 320 L 140 270 L 190 330 L 256 260 L 322 330 L 372 270 L 422 320 L 410 400 Q 256 460 102 400 Z" fill="#FAFAFA" />
+    <g stroke="#334155" stroke-width="7">
+      <path d="M 140 260 L 140 470" />
+      <path d="M 190 260 L 190 470" />
+      <path d="M 256 250 L 256 470" />
+      <path d="M 322 260 L 322 470" />
+      <path d="M 372 260 L 372 470" />
+    </g>
+    <g fill="#334155">
+      <rect x="146" y="318" width="38" height="74" rx="8" />
+      <rect x="262" y="318" width="52" height="74" rx="8" />
+      <rect x="328" y="318" width="38" height="74" rx="8" />
+    </g>
+  </g>
+  <path d="M 90 320 L 140 270 L 190 330 L 256 260 L 322 330 L 372 270 L 422 320 L 410 400 Q 256 460 102 400 Z" fill="none" stroke="#A855F7" stroke-width="12" stroke-linejoin="round" />
+</svg>

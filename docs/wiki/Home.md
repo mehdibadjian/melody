@@ -1,7 +1,9 @@
-# Melody Wiki
+# Tama Melody Wiki
 
 Home for the **melody** codebase: a children's music-learning app (ages 6–10)
-that teaches a real electric piano by listening through the microphone.
+that teaches a real electric piano by listening through the microphone. The
+user-facing product name is **Tama Melody**; the repo and package identifiers
+are still `melody` / `melody_app`.
 
 - Repo: `mehdibadjian/melody` · default branch `main` · app version `1.6.3+13`
 - Stack: Flutter `3.24.3` stable / Dart `^3.5.3`, Riverpod, SharedPreferences

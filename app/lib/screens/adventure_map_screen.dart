@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melody_app/domain/content/content_models.dart';
 import 'package:melody_app/providers.dart';
+import 'package:melody_app/theme/tama_theme.dart';
 import 'acoustic_practice_screen.dart';
 import 'level_play_screen.dart';
 
@@ -20,7 +21,7 @@ class AdventureMapScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Melody Quest'),
+        title: const Text('$kTamaMelodyAppName Quest'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -92,7 +93,8 @@ class AdventureMapScreen extends ConsumerWidget {
               key: const Key('play-mode-real-keyboard'),
               leading: const Icon(Icons.piano, size: 32),
               title: const Text('My real keyboard'),
-              subtitle: const Text('Melody listens and guides your fingers'),
+              subtitle: const Text(
+                  '$kTamaMelodyAppName listens and guides your fingers'),
               onTap: () =>
                   Navigator.of(sheetContext).pop(PlayMode.realKeyboard),
             ),
