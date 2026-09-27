@@ -57,6 +57,17 @@ class LessonSession {
   int get hits => _hits;
   int get totalAttempts => _attempts;
 
+  /// How many notes of the song have been landed (not taps made).
+  int get position => _position;
+
+  /// The note the player must land next, or null once the song is complete.
+  ///
+  /// The session owns this so a caller cannot derive it from [totalAttempts]:
+  /// taps and progress are different numbers the moment a miss holds the
+  /// player on the same note, and an index built from taps points at a slot the
+  /// child never reached.
+  String? get nextExpectedNote => complete ? null : _expected[_position];
+
   /// Fraction of attempted notes that were hit. Defined as 1.0 when nothing
   /// has been attempted yet (non-punitive default per PRD §3).
   double get accuracy => _attempts == 0 ? 1.0 : _hits / _attempts;
@@ -66,21 +77,29 @@ class LessonSession {
 
   /// Submits a note event for evaluation against the next expected note.
   ///
-  /// Judged on pitch/sequence only: the session moves through the expected
-  /// sequence and counts hits, while live timing correctness is the
-  /// instrument's concern ([InstrumentInput.evaluate] checks arrival against
-  /// the target window). Gap-based timing here would punish normal beat
-  /// spacing and penalize the first note (non-punitive, PRD §3).
+  /// Judged on pitch only: the session never penalizes late/early arrival, so
+  /// normal beat spacing and first-note gaps don't count as misses (PRD §3).
   ///
-  /// Position advances past misses too: the session moves on to the next
-  /// expected note regardless of outcome.
+  /// **A miss does not advance.** The session holds on the current note until
+  /// the child lands it, so a fumble costs one tap rather than the rest of the
+  /// song. This is what `SongCoach` has always done on the acoustic path
+  /// ("wrong: ... stays on the same note"); the tap path used to step past a
+  /// miss instead, which meant one early slip shifted every later note against
+  /// a position the child had already slid away from and scored a correctly
+  /// played song as 0%. Two modes, one mistake, opposite verdicts.
+  ///
+  /// Because attempts still count the misses, [accuracy] stays exactly what it
+  /// always claimed to be — the fraction of notes played that were right — and
+  /// needs no new formula.
   void submit(NoteEvent event) {
     if (complete) return;
     final expected = _expected[_position];
     final correct = event.note == expected;
     _attempts++;
-    if (correct) _hits++;
-    _position++;
+    if (correct) {
+      _hits++;
+      _position++;
+    }
   }
 
   /// Whether the session result satisfies the level's success threshold.

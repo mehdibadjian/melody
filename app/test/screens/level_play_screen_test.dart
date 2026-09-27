@@ -49,6 +49,10 @@ void main() {
     }
   }
 
+  /// The note the child is being asked for right now.
+  String targetText(WidgetTester tester) =>
+      tester.widget<Text>(find.byKey(const Key('target-note'))).data!;
+
   Future<void> playPerfectRun(WidgetTester tester) =>
       playNotes(tester, ['C4', 'D4', 'E4']);
 
@@ -82,8 +86,8 @@ void main() {
     });
   });
 
-  group('LevelPlayScreen result toast', () {
-    testWidgets('passing run shows a non-blocking, auto-dismissing toast',
+  group('LevelPlayScreen result', () {
+    testWidgets('passing run shows a non-blocking toast and a result card',
         (tester) async {
       final container = await makeContainer();
       addTearDown(container.dispose);
@@ -96,27 +100,142 @@ void main() {
       // so the child can keep playing straight away.
       expect(find.byType(AlertDialog), findsNothing);
       expect(find.text('OK'), findsNothing);
-      expect(find.textContaining('You did it!'), findsOneWidget);
+      expect(find.byKey(const Key('result-toast')), findsOneWidget);
+      // The card is the part that stays after the toast goes.
+      expect(find.byKey(const Key('result-title')), findsOneWidget);
+      expect(find.text('You did it!'), findsOneWidget);
+      expect(find.text('3 of 3 notes • 100% accurate'), findsOneWidget);
 
       await dismissToast(tester);
+      // The reported bug was a dead end: the toast vanished and nothing was
+      // left to act on. The card must outlive it.
       expect(find.byKey(const Key('result-toast')), findsNothing);
+      expect(find.byKey(const Key('play-again')), findsOneWidget);
     });
 
-    testWidgets('failing run toasts encouragement instead of a dialog',
+    testWidgets('a wrong tap does not end the run', (tester) async {
+      final container = await makeContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(buildScreen(container));
+      await tester.pumpAndSettle();
+      // Longer than the whole song in fumbles.
+      await playNotes(tester, ['F4', 'F4', 'F4', 'F4', 'F4', 'F4']);
+
+      expect(find.byKey(const Key('result-toast')), findsNothing);
+      expect(find.byKey(const Key('play-again')), findsNothing);
+      // Still being asked for the first note, because none has been landed.
+      expect(targetText(tester), 'C4');
+      // Progress bar has moved zero notes even after six taps.
+      expect(find.text('0 / 3'), findsOneWidget);
+    });
+
+    testWidgets('a wrong tap is coached, not just scored', (tester) async {
+      final container = await makeContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(buildScreen(container));
+      await tester.pumpAndSettle();
+      await playNotes(tester, ['F4']); // target is C4, so F4 is too high
+
+      expect(find.byKey(const Key('coaching-message')), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.byKey(const Key('coaching-message'))).data,
+        contains('lower'),
+      );
+    });
+
+    testWidgets('progress counts notes landed, not taps made', (tester) async {
+      final container = await makeContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(buildScreen(container));
+      await tester.pumpAndSettle();
+      await playNotes(tester, ['F4', 'C4', 'F4', 'D4']);
+
+      expect(find.text('2 / 3'), findsOneWidget);
+      expect(find.text('Keep going'), findsOneWidget);
+    });
+
+    testWidgets('failing run ends by playing the song out, then offers a retry',
         (tester) async {
       final container = await makeContainer();
       addTearDown(container.dispose);
 
       await tester.pumpWidget(buildScreen(container));
       await tester.pumpAndSettle();
-      await playNotes(tester, ['F4', 'F4', 'F4']);
+      // One fumble per note: 3 hits in 6 taps = 50% accuracy, below the 0.7
+      // threshold, so this now fails on merit rather than by running out.
+      await playNotes(tester, ['F4', 'C4', 'F4', 'D4', 'F4', 'E4']);
 
       expect(find.byType(AlertDialog), findsNothing);
-      expect(find.textContaining('Nice try!'), findsOneWidget);
-      expect(find.textContaining('Accuracy 0%'), findsOneWidget);
+      expect(find.text('Good try!'), findsOneWidget);
+      expect(find.text('3 of 3 notes • 50% accurate'), findsOneWidget);
+      expect(find.textContaining('So close!'), findsOneWidget);
 
       await dismissToast(tester);
+      expect(find.byKey(const Key('play-again')), findsOneWidget);
+      // No stars for a failed run.
+      expect(find.text('Stars 0'), findsOneWidget);
+    });
+
+    testWidgets('Play again restarts the run in place', (tester) async {
+      final container = await makeContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(buildScreen(container));
+      await tester.pumpAndSettle();
+      await playPerfectRun(tester);
+      expect(find.text('You did it!'), findsOneWidget);
+      expect(find.text('Stars 3'), findsOneWidget);
+
+      // Toast still covering the keys at this point — that is the hazard the
+      // retry button has to clear, or the first taps of the replay land on it.
+      expect(find.byKey(const Key('result-toast')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('play-again')));
+      // Only the hide animation is allowed to run here. pumpAndSettle would also
+      // advance the toast's 3s auto-dismiss timer, so the assertion would pass
+      // with or without the fix and prove nothing.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
       expect(find.byKey(const Key('result-toast')), findsNothing);
+      await tester.pumpAndSettle();
+
+      // Fresh run: result gone, progress back to zero, asked for the first note.
+      expect(find.byKey(const Key('result-title')), findsNothing);
+      expect(find.text('0 / 3'), findsOneWidget);
+      expect(targetText(tester), 'C4');
+      // The replay has to be playable, not just visible: with the old toast
+      // still on screen it absorbs these taps and the run never moves.
+      await tester.tap(find.byKey(const Key('key-C4')));
+      await tester.pump();
+      expect(find.text('1 / 3'), findsOneWidget);
+      // And replaying must not pay the level out a second time. "Stars 3" alone
+      // cannot tell a completed replay from a dead one, so the card has to be
+      // back as well.
+      await playNotes(tester, ['D4', 'E4']);
+      expect(find.text('You did it!'), findsOneWidget);
+      expect(find.text('Stars 3'), findsOneWidget);
+      await dismissToast(tester);
+    });
+
+    testWidgets('taps after a finished run are ignored until retry',
+        (tester) async {
+      final container = await makeContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(buildScreen(container));
+      await tester.pumpAndSettle();
+      await playPerfectRun(tester);
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Tapping more keys must not re-commit progress or re-toast.
+      await tester.tap(find.byKey(const Key('key-C4')));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byKey(const Key('result-toast')), findsOneWidget);
+      expect(find.text('Stars 3'), findsOneWidget);
+      await dismissToast(tester);
     });
   });
 

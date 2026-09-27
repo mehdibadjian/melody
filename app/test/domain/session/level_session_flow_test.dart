@@ -40,7 +40,12 @@ void main() {
       expect(progress.noteCurrency, 5);
     });
 
-    test('missed notes are non-punitive: session still completes', () {
+    test('missed notes hold the player and never end the run', () {
+      // Rewritten for the hold rule. This test used to assert that three taps
+      // (two of them wrong) ended a 3-note level; ending a level by running out
+      // of taps is precisely the reported bug — the child got "Nice try" after
+      // 6 presses whether or not they could play. A run now ends only when the
+      // song has been played through.
       final instrument = KeyboardInstrument();
       final flow = LevelSessionFlow(
         level: level,
@@ -48,9 +53,19 @@ void main() {
         progress: PlayerProgress.initial(),
       );
       flow.submit(const NoteEvent(note: 'X4', timestampMs: 0));
+      expect(flow.isComplete, isFalse);
+      expect(flow.targetNote, 'C4', reason: 'a miss must not skip a note');
       flow.submit(const NoteEvent(note: 'D4', timestampMs: 100));
+      expect(flow.targetNote, 'C4');
       flow.submit(const NoteEvent(note: 'Y4', timestampMs: 200));
+      expect(flow.isComplete, isFalse);
+      for (final note in ['C4', 'D4', 'E4']) {
+        flow.submit(NoteEvent(note: note, timestampMs: 300));
+      }
       expect(flow.isComplete, isTrue);
+      // 3 hits in 6 taps: the run can now fail on accuracy, which is the only
+      // honest way left to fail.
+      expect(flow.result!.accuracy, closeTo(0.5, 0.001));
       expect(flow.result!.passed, isFalse);
     });
 
@@ -84,9 +99,14 @@ void main() {
         progress: PlayerProgress.initial(),
         onAnalyticsEvent: events.add,
       );
+      // Play the song out with two fumbles: 3 hits in 5 taps is 0.6 accuracy,
+      // below the 0.7 threshold, so this fails honestly rather than by running
+      // out of notes.
       flow.submit(const NoteEvent(note: 'X4', timestampMs: 0));
       flow.submit(const NoteEvent(note: 'X4', timestampMs: 100));
-      flow.submit(const NoteEvent(note: 'X4', timestampMs: 200));
+      for (final note in ['C4', 'D4', 'E4']) {
+        flow.submit(NoteEvent(note: note, timestampMs: 200));
+      }
       expect(events.any((e) => e.type == AnalyticsEventType.practiceSession),
           isTrue);
       expect(events.any((e) => e.type == AnalyticsEventType.levelCompleted),
@@ -145,9 +165,13 @@ void main() {
         progress: progress,
         now: () => DateTime.utc(2026, 9, 20),
       );
+      // Two fumbles then the song: 0.6 accuracy fails the threshold, and a
+      // failed run still counts as practice.
       flow.submit(const NoteEvent(note: 'X4', timestampMs: 0));
       flow.submit(const NoteEvent(note: 'X4', timestampMs: 100));
-      flow.submit(const NoteEvent(note: 'X4', timestampMs: 200));
+      for (final note in ['C4', 'D4', 'E4']) {
+        flow.submit(NoteEvent(note: note, timestampMs: 200));
+      }
       expect(flow.isComplete, isTrue);
       expect(progress.currentStreak, 1);
     });

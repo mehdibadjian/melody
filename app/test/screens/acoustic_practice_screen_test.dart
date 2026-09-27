@@ -31,17 +31,27 @@ void main() {
     mic = FakeMicCapture();
   });
 
-  Future<Widget> app(FakeMicCapture fake) async {
+  /// Builds the screen over a fake mic. [harness] additionally hands back the
+  /// container: the acoustic screen has no stars HUD, so a test that needs to
+  /// prove a child was *paid* has to read the committed progress state.
+  Future<({ProviderContainer container, Widget widget})> harness(
+      FakeMicCapture fake) async {
     final prefs = await SharedPreferences.getInstance();
-    return UncontrolledProviderScope(
-      container: ProviderContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-        audioEngineProvider.overrideWith((ref) => SynthAudioEngine()),
-        micCaptureProvider.overrideWithValue(fake),
-      ]),
-      child: const MaterialApp(home: AcousticPracticeScreen(level: song)),
+    final container = ProviderContainer(overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      audioEngineProvider.overrideWith((ref) => SynthAudioEngine()),
+      micCaptureProvider.overrideWithValue(fake),
+    ]);
+    return (
+      container: container,
+      widget: UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: AcousticPracticeScreen(level: song)),
+      ),
     );
   }
+
+  Future<Widget> app(FakeMicCapture fake) async => (await harness(fake)).widget;
 
   /// Taps start-listening and lets the controller spin up capture.
   Future<void> startListening(WidgetTester tester) async {
@@ -143,6 +153,34 @@ void main() {
     await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('result-toast')), findsNothing);
+  });
+
+  testWidgets('a child who lands every note is paid, even after fumbles',
+      (tester) async {
+    // The acoustic path judges a run on hits/attempts, where attempts counts
+    // every wrong note heard. SongCoach only completes when every note has been
+    // landed, so correctHits == requiredNotes.length at the finish line — which
+    // meant a slow-but-thorough child could cross it and still be denied the
+    // payout, silently: the screen said "All done" and the toast said "nice
+    // work", while awarding nothing.
+    final h = await harness(mic);
+    addTearDown(h.container.dispose);
+    await tester.pumpWidget(h.widget);
+    await tester.pumpAndSettle();
+    await startListening(tester);
+
+    for (final note in song.requiredNotes) {
+      await play(tester, 'A3'); // one wrong key heard before each note
+      await play(tester, note);
+    }
+
+    expect(find.byKey(const Key('song-complete')), findsOneWidget,
+        reason: 'the song was played all the way through');
+    final progress = h.container.read(playerProgressProvider);
+    expect(progress.completedLevelIds, contains(song.id),
+        reason: 'landing every note of the song must complete the level');
+    expect(progress.stars, song.rewardPayout.stars);
+    expect(progress.noteCurrency, song.rewardPayout.noteCurrency);
   });
 
   testWidgets('progress strip shows position through the song', (tester) async {

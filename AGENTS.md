@@ -120,7 +120,9 @@ A children's music-learning app (ages 6–10) specified via a PRD
   `ContentParser` (schema v2; still accepts v1). Analytics events have a
   whitelisted-key payload (COPPA/GDPR-K). Reward economy:
   first-completion-only payouts, currency earned-only (no pay-to-win).
-- Non-punitive semantics: LessonSession advances past misses; accuracy
+- Non-punitive semantics: a miss holds the player on the current note (it counts
+  as an attempt but does not advance), so a level only ends when the song is
+  played through; runs fail on accuracy, never on running out of taps. Accuracy
   defaults to 1.0 with zero attempts; streaks reset to 1 (never below).
 - Multi-touch test gotcha: broadcast streams need `await Future.delayed(Duration.zero)` after `press()` before asserting.
 - Remote operations WORK with the sandbox `GITHUB_TOKEN`: `git push` to a

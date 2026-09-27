@@ -31,25 +31,35 @@ class LevelSessionFlow {
 
   bool get isComplete => _finished;
 
+  /// The note the child is being asked for right now, or null once the run has
+  /// ended. Read from the session rather than indexed by tap count — see
+  /// [LessonSession.nextExpectedNote].
+  String? get targetNote => _session.nextExpectedNote;
+
+  /// Notes of the song landed so far, for a "3 of 12" progress readout.
+  int get notesCleared => _session.position;
+
+  /// Total taps made, including ones that held the child on the same note.
+  int get taps => _session.totalAttempts;
+
   /// Submits a note event. Returns true when the note was hit.
   /// Ignored after the level run has completed.
   bool submit(NoteEvent event) {
     if (_finished) return false;
-    final expected = level.requiredNotes[_session.totalAttempts];
+    // Ask the session for the expectation *before* submitting. A miss now holds
+    // the position, so indexing `requiredNotes` by tap count would judge (and
+    // record mastery for) a note the child was never asked to play.
+    final expected = _session.nextExpectedNote;
+    if (expected == null) return false;
     final correct = event.note == expected;
     progress.recordNoteMastery(expected, hit: correct);
     _session.submit(event);
-    _advanceTarget();
     if (_session.complete) {
       _finish();
       return correct;
     }
+    _instrument.setTarget(_session.nextExpectedNote!);
     return correct;
-  }
-
-  void _advanceTarget() {
-    if (_session.complete) return;
-    _instrument.setTarget(level.requiredNotes[_session.totalAttempts]);
   }
 
   /// Terminal state of the level run.
@@ -98,6 +108,7 @@ class LevelSessionFlow {
     _result = LevelRunResult(
       passed: passed,
       accuracy: accuracy,
+      notesLanded: _session.position,
       starsAwarded: stars,
       noteCurrencyAwarded: noteCurrency,
     );
@@ -109,12 +120,21 @@ class LevelRunResult {
   const LevelRunResult({
     required this.passed,
     required this.accuracy,
+    required this.notesLanded,
     required this.starsAwarded,
     required this.noteCurrencyAwarded,
   });
 
   final bool passed;
   final double accuracy;
+
+  /// How many of the song's notes the child actually landed.
+  ///
+  /// Carried explicitly because "notes played" and "accuracy" answer different
+  /// questions once a run ends by finishing the song rather than by running out
+  /// of taps: `3 of 12 notes` reads to a child, `25% accuracy` does not.
+  final int notesLanded;
+
   final int starsAwarded;
   final int noteCurrencyAwarded;
 }

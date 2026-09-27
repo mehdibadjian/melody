@@ -1,12 +1,15 @@
 import 'dart:io';
 
 import 'package:melody_app/domain/audio/audio_engine.dart';
+import 'package:melody_app/domain/piano/piano_layout.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('AudioEngine contract', () {
     test('NoteAudio has correct frequency mapping for C4', () {
-      expect(NoteFrequency.of('C4'), 261.63);
+      // Derived from A4=440 equal temperament, so C4 is 261.6256 Hz rather than
+      // the rounded 261.63 a hand-typed table used to hold.
+      expect(NoteFrequency.of('C4'), closeTo(261.63, 0.01));
     });
 
     test('NoteAudio maps all white keys in octave 4', () {
@@ -34,7 +37,7 @@ void main() {
 
     test('playableNotes is exactly the set the engine can sound', () {
       expect(NoteFrequency.playableNotes, contains('F#4'));
-      expect(NoteFrequency.playableNotes, isNot(contains('G#6')));
+      expect(NoteFrequency.playableNotes, contains('G#6'));
     });
 
     test('SynthAudioEngine can be created and disposed', () async {
@@ -110,6 +113,57 @@ void main() {
         expect(NoteFrequency.playableNotes,
             contains(NoteAsset.noteNameFromFile(file)),
             reason: '$file exists but has no frequency entry');
+      }
+    });
+  });
+
+  group('the frequency table is derived from the board', () {
+    test('it covers every key of the 61-key board and nothing else', () {
+      // The map is generated from KeyboardLayout.sixtyOne — the same definition
+      // the illustrated keyboard draws — so this pins the two together. A board
+      // key with no pitch entry is a silent key, and playNote returns without
+      // an error, so the old hand-typed table drifted in exactly the places
+      // content later grew into.
+      expect(
+          NoteFrequency.playableNotes, KeyboardLayout.sixtyOne.notes.toSet());
+      expect(NoteFrequency.playableNotes, hasLength(61));
+    });
+
+    test('reference pitches match the values tuners use', () {
+      // Hard-coded rather than recomputed, so this cannot agree with a broken
+      // formula just by using it.
+      const reference = {
+        'C4': 261.63,
+        'E4': 329.63,
+        'A4': 440.00,
+        'C5': 523.25,
+        'F#4': 369.99,
+        'A5': 880.00,
+        'C7': 2093.00,
+      };
+      reference.forEach((note, hz) {
+        expect(NoteFrequency.of(note)!, closeTo(hz, 0.01), reason: note);
+      });
+    });
+
+    test('adjacent keys are one equal-tempered semitone apart', () {
+      // The structural property that makes it a piano at all: every neighbour
+      // ratio is 2^(1/12) and every octave exactly doubles, across the whole
+      // board rather than at sampled notes.
+      const twelfthRoot2 = 1.0594630940595574;
+      final notes = KeyboardLayout.sixtyOne.notes;
+      for (var i = 1; i < notes.length; i++) {
+        final ratio =
+            NoteFrequency.of(notes[i])! / NoteFrequency.of(notes[i - 1])!;
+        expect(ratio, closeTo(twelfthRoot2, 1e-6),
+            reason: '${notes[i - 1]} -> ${notes[i]}');
+      }
+      for (var i = 0; i + 12 < notes.length; i++) {
+        expect(
+          NoteFrequency.of(notes[i + 12])!,
+          closeTo(NoteFrequency.of(notes[i])! * 2, 1e-6),
+          reason: '${notes[i]} octave',
+        );
       }
     });
   });

@@ -91,6 +91,12 @@ gameplay.
   durations — §9.4]`
 - **Non-punitive semantics (hard requirement):**
   - Misses never end a session; the session advances past missed notes.
+    `[AMENDED: "advances past" was implemented on the tap path and dropped the
+    child out of the song — one early slip shifted every later note against a
+    position they never reached, so a correctly played tune scored ~0%. Both
+    paths now hold on a miss (position advances only on a hit), which is what
+    the hard requirement above actually needs. See
+    docs/wiki/Content-gamification-analytics.md.]`
   - Accuracy with zero attempts defaults to 1.0 (never a division-by-zero
     fail state).
   - Streaks reset to 1, never below; no streak ever reaches 0.

@@ -74,26 +74,38 @@ because that is the arrangement a fresh player is dropped into.
   a bolt on the badge and a diamond pip for a boss level, so those affordances
   are no longer test-only. Nothing gates on it — no unlock requirement, no
   different reward path; it is presentation plus one analytics tag.
-- Audio is keyed to `NoteFrequency._frequencies`, currently 16 WAVs: naturals
-  C4–B5 plus `F#4` and `D6`, which *GOLDEN* needs. `AssetAudioEngine.playNote`
-  silently returns for anything outside that table, so a new accidental means
-  **both** a table entry and a file — and until `audio_engine_test.dart`'s
-  table↔bundle check was added, the two drifting apart would have surfaced as a
-  silent key rather than a failure.
+- Audio covers the **whole 61-key board**: `NoteFrequency` is generated from
+  `KeyboardLayout.sixtyOne` and equal temperament at A4=440, and each of those
+  61 notes has a WAV in `assets/audio/notes/`. It used to be a hand-typed list
+  of 16. `AssetAudioEngine.playNote` still returns silently for a name with no
+  entry, which is why `audio_engine_test.dart` checks the table and the bundle
+  agree in **both** directions: table-without-file and file-without-table are
+  both a dead key, not an error.
 - Sharps are stored on disk with `s`, not `#` (`fs4.wav` for `F#4`), and
   `NoteAsset` is the only place that spells it. See its doc comment: `#` is a
   URL fragment delimiter and `playNote` swallows a failed source, so a `#` file
   name risks a key that does nothing rather than one that errors.
-- The on-screen `PianoKeyboard` renders 7 white keys (C4–B4) on a phone and 14
-  (C4–B5) above 900 dp — no black keys at any size. Songs that need a sharp or a
-  note outside that octave are still valid content, but the tap path can only
-  step over the missing keys. `piano_keyboard_winnability_test.dart` pins the
-  exact per-board sets, and splits two failures that look similar:
-  **unwinnable** (a child cannot pass by tapping at all — *Amazing Grace* has
-  shipped this way since before the test existed, and so do *GOLDEN — Medium*
-  and *Hard* on a phone) versus **skips notes** (passable, but silently).
-  Those arrangements are meant for the acoustic path, where the guide window
-  slides over the full 61-key board.
+- The on-screen `PianoKeyboard` is a **window onto the same 61-key board the
+  acoustic guide draws**, rendered by `IllustratedKeyboard`: black keys included,
+  one octave on a phone and two above 900 dp, sliding to stay centred on the
+  note the child is asked for. It used to be its own seven-white-key row pinned
+  to C4–B4, which made several shipped songs literally unfinishable by tapping —
+  *Amazing Grace* (melody C5–E5) could reach at best 0.14 accuracy against a 0.8
+  threshold, and *GOLDEN — Medium/Hard* likewise.
+  `piano_keyboard_playability_test.dart` now asserts the opposite of that: for
+  every note of every level, at both widths, the key is on screen and the song
+  can be completed. Keep content inside `KeyboardLayout.sixtyOne` and that stays
+  true; step outside it and the guard fails rather than shipping a dead key.
+- Accuracy means **correct taps / total taps**, on both paths, and a wrong tap
+  *holds* the child on the current note instead of consuming it. So a level ends
+  by the song being played through, never by running out of taps; a run can
+  still fail, but only on accuracy. One wrong tap before every note scores 0.5,
+  below every threshold in the library (0.70–0.80), which is what keeps the
+  thresholds meaningful now that reaching the end is always possible.
+- Because the acoustic coach cannot complete without landing every note,
+  `AcousticPracticeScreen` awards the payout on completion rather than
+  re-testing the threshold itself. It used to re-test it, which silently denied
+  the reward to a child who fumbled a lot and still finished the song.
 
 ## Gamification (`PlayerProgress`)
 
