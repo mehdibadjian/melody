@@ -39,9 +39,10 @@ class _AcousticPracticeScreenState
 
   static final KeyboardLayout _board = KeyboardLayout.sixtyOne;
 
-  /// Half-octave-plus window so a child sees a couple of keys of context either
-  /// side of the target without the board becoming unreadable on a phone.
-  static const _windowSize = 15;
+  /// Two octaves (25 keys) around the target. The window is C-anchored rather
+  /// than merely centred — see [KeyboardLayout.octaveAlignedWindow] — so the
+  /// black-key pattern matches the note names at every width.
+  static const _windowOctaves = 2;
 
   @override
   void initState() {
@@ -120,40 +121,64 @@ class _AcousticPracticeScreenState
     final notes = widget.level.requiredNotes;
     // Target drives the window; fall back to the first note when complete.
     final anchor = snap.targetNote ?? notes.first;
-    final window = _board.visibleWindow(anchor, size: _windowSize);
+    final window = _board.octaveAlignedWindow(anchor, octaves: _windowOctaves);
+
+    final progress =
+        _SongProgress(index: snap.coach.index, total: notes.length);
+    final panel = Expanded(child: _CoachingPanel(snap: snap));
+    final status = <Widget>[
+      if (snap.permissionDenied)
+        _PermissionDenied(onRetry: _start)
+      else if (!snap.listening && !snap.complete)
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: FilledButton.icon(
+            key: const Key('start-listening'),
+            onPressed: _start,
+            icon: const Icon(Icons.mic),
+            label: const Text('Start listening'),
+          ),
+        )
+      else if (snap.listening)
+        const Padding(
+          padding: EdgeInsets.all(12),
+          child: _ListeningIndicator(),
+        ),
+    ];
+    final guide = _KeyboardGuide(
+      window: window,
+      targetNote: anchor,
+      detectedNote: snap.detectedNote,
+      arrow: snap.feedback?.arrow,
+      isComplete: snap.complete,
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.level.name)),
       body: SafeArea(
-        child: Column(
-          children: [
-            _SongProgress(index: snap.coach.index, total: notes.length),
-            Expanded(child: _CoachingPanel(snap: snap)),
-            if (snap.permissionDenied)
-              _PermissionDenied(onRetry: _start)
-            else if (!snap.listening && !snap.complete)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: FilledButton.icon(
-                  key: const Key('start-listening'),
-                  onPressed: _start,
-                  icon: const Icon(Icons.mic),
-                  label: const Text('Start listening'),
-                ),
-              )
-            else if (snap.listening)
-              const Padding(
-                padding: EdgeInsets.all(12),
-                child: _ListeningIndicator(),
-              ),
-            _KeyboardGuide(
-              window: window,
-              targetNote: anchor,
-              detectedNote: snap.detectedNote,
-              arrow: snap.feedback?.arrow,
-              isComplete: snap.complete,
-            ),
-          ],
+        // In landscape the phone is already short, so stacking a text panel on
+        // top of a keyboard leaves both unreadable. The coaching readout and the
+        // keys sit side by side instead, and the keys get the full remaining
+        // height because they are the part the child has to aim at.
+        child: OrientationBuilder(
+          builder: (context, orientation) {
+            if (orientation == Orientation.landscape) {
+              return Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      children: [progress, panel, ...status],
+                    ),
+                  ),
+                  Expanded(flex: 4, child: guide),
+                ],
+              );
+            }
+            return Column(
+              children: [progress, panel, ...status, guide],
+            );
+          },
         ),
       ),
     );
@@ -175,11 +200,19 @@ class _SongProgress extends StatelessWidget {
       child: Column(
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Both halves flex, because in landscape this strip shares the
+            // screen with the keyboard and two bare Texts overflowed the rail.
             children: [
-              Text('$done / $total', style: const TextStyle(fontSize: 18)),
-              Text(index >= total ? 'Done!' : 'Keep going',
-                  style: const TextStyle(fontSize: 16)),
+              Expanded(
+                child: Text('$done / $total',
+                    style: const TextStyle(fontSize: 18)),
+              ),
+              Expanded(
+                child: Text(index >= total ? 'Done!' : 'Keep going',
+                    textAlign: TextAlign.end,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 16)),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -225,29 +258,38 @@ class _CoachingPanel extends StatelessWidget {
     final fb = snap.feedback;
     final message = fb?.message ?? 'Play ${snap.targetNote}';
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('Play this note:', style: TextStyle(fontSize: 16)),
-            Text(snap.targetNote ?? '',
-                style: theme.textTheme.displayLarge
-                    ?.copyWith(color: TamaColors.purple)),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              key: const Key('coaching-message'),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: fb?.isCorrect == true
-                    ? TamaColors.emerald
-                    : TamaColors.orange,
+      // FittedBox rather than a fixed layout: in landscape this panel sits in a
+      // rail roughly a third of the screen tall, where the note name at
+      // displayLarge plus the coaching line overflowed the box by ~50 px.
+      // Scaling the whole block down keeps the text legible and on screen at
+      // any height instead of clipping it.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Play this note:', style: TextStyle(fontSize: 16)),
+              Text(snap.targetNote ?? '',
+                  style: theme.textTheme.displayLarge
+                      ?.copyWith(color: TamaColors.purple)),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                key: const Key('coaching-message'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: fb?.isCorrect == true
+                      ? TamaColors.emerald
+                      : TamaColors.orange,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -265,8 +307,10 @@ class _ListeningIndicator extends StatelessWidget {
       children: [
         Icon(Icons.graphic_eq, color: TamaColors.rose, size: 28),
         SizedBox(width: 8),
-        Text('Listening… play the highlighted key',
-            style: TextStyle(fontSize: 16)),
+        Flexible(
+          child: Text('Listening… play the highlighted key',
+              style: TextStyle(fontSize: 16)),
+        ),
       ],
     );
   }
@@ -305,6 +349,11 @@ class _PermissionDenied extends StatelessWidget {
 
 /// The illustrated real-keyboard guide (read-only here: the child plays their
 /// own instrument, not the screen).
+///
+/// It fills whatever box the parent gives it rather than sizing itself from the
+/// full screen height, so the landscape side-by-side layout — where the keys
+/// own only part of the screen — gets a board that actually fits instead of one
+/// that overflows off the bottom.
 class _KeyboardGuide extends StatelessWidget {
   const _KeyboardGuide({
     required this.window,
@@ -322,16 +371,23 @@ class _KeyboardGuide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.30,
-      child: IllustratedKeyboard(
-        windowNotes: window,
-        targetNote: targetNote,
-        detectedNote: detectedNote,
-        arrow: isComplete ? null : arrow,
-        onNote: null, // read-only guide: input comes from the real keyboard
-        height: MediaQuery.of(context).size.height * 0.30,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final height = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : MediaQuery.of(context).size.height * 0.30;
+        return SizedBox(
+          height: height,
+          child: IllustratedKeyboard(
+            windowNotes: window,
+            targetNote: targetNote,
+            detectedNote: detectedNote,
+            arrow: isComplete ? null : arrow,
+            onNote: null, // read-only guide: input comes from the real keyboard
+            height: height,
+          ),
+        );
+      },
     );
   }
 }

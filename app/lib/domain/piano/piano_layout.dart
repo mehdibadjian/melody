@@ -122,4 +122,44 @@ class KeyboardLayout {
         (center - span ~/ 2).clamp(lowestMidi, highestMidi - span + 1);
     return [for (var m = start; m < start + span; m++) noteFromMidi(m)];
   }
+
+  /// A C-to-C slice of [octaves] whole octaves that contains [target].
+  ///
+  /// [visibleWindow] centres the target, which reads well for coaching but is
+  /// wrong as a *picture of a piano*: because it cuts the board mid-chord, the
+  /// window's first two white keys are an E–F or B–C pair with no black key
+  /// between them. The eye (and the colour code) then places the group of "two
+  /// black keys" one white key early, and it keeps drifting by one per octave —
+  /// so the highlight no longer sits on the key it names. Clipped edge keys make
+  /// the window read as a full board that has been cut in half.
+  ///
+  /// Anchoring every window to a C keeps the grouping correct at any width. The
+  /// window is then nudged so it really does hold [target]: centring can leave a
+  /// note in the upper half of its octave outside a narrow window, and a board
+  /// whose top octave is partial (a 76-key board's G7) has no C-anchored window
+  /// that reaches it, so there the top edge stops at the board rather than at a
+  /// C. Showing the note the child must play outranks ending on a C.
+  List<String> octaveAlignedWindow(String target, {int octaves = 2}) {
+    final whole = octaves.clamp(1, 8);
+    // A window may not start on a board's partial bottom octave.
+    final boardLowC = lowestMidi + ((12 - lowestMidi % 12) % 12);
+    final span = whole * 12;
+    final center = (midiFromNote(target) ?? ((lowestMidi + highestMidi) ~/ 2))
+        .clamp(boardLowC, highestMidi);
+    // Highest start that still keeps the whole window on the board, on the grid.
+    final lastStart = _floorToC(highestMidi - span);
+    var start = _floorToC(center - span ~/ 2);
+    // A note in the top half of its octave falls outside a window centred on
+    // the octave below it; re-anchor on the note's own octave instead.
+    if (start + span < center) start = _floorToC(center);
+    if (start < boardLowC) start = boardLowC;
+    if (start > lastStart && lastStart >= boardLowC) start = lastStart;
+    var end = start + span;
+    if (end > highestMidi) end = highestMidi;
+    if (end < center) end = center;
+    return [for (var m = start; m <= end; m++) noteFromMidi(m)];
+  }
 }
+
+/// The highest MIDI number at or below [midi] that is a C.
+int _floorToC(int midi) => midi - ((midi % 12) + 12) % 12;

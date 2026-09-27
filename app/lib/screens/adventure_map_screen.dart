@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melody_app/domain/content/content_models.dart';
 import 'package:melody_app/providers.dart';
 import 'package:melody_app/theme/tama_theme.dart';
+import 'package:melody_app/widgets/lesson_quest_tile.dart';
 import 'acoustic_practice_screen.dart';
 import 'level_play_screen.dart';
 
@@ -57,15 +58,9 @@ class AdventureMapScreen extends ConsumerWidget {
                   : null,
             ),
             for (final lesson in doc.lessons)
-              ListTile(
-                leading: Icon(
-                  lesson.levels.any((l) => l.isBossBattle)
-                      ? Icons.local_fire_department
-                      : Icons.music_note,
-                  size: 36,
-                ),
-                title: Text(lesson.title),
-                subtitle: Text(lesson.difficulty.name),
+              LessonQuestTile(
+                lesson: lesson,
+                progress: progress,
                 onTap: () => _choosePlayMode(context, lesson),
               ),
           ],

@@ -36,7 +36,7 @@ that implements this interface. Nothing above it changes.
 ```
 ┌─ presentation ──────────────────────────────────────────────────────┐
 │ screens/  adventure_map · level_play · acoustic_practice            │
-│ widgets/  piano_keyboard (tappable) · illustrated_keyboard (picture) │
+│ widgets/  piano_keyboard · illustrated_keyboard · lesson_quest_tile │
 │ theme/    tama_theme — the shared Tama palette + ThemeData          │
 ├─ composition ───────────────────────────────────────────────────────┤
 │ providers.dart   Riverpod providers        main.dart  app bootstrap │

@@ -7,11 +7,11 @@ import 'package:melody_app/theme/tama_theme.dart';
 /// listens through the mic (PRD §3 connected-instrument guidance).
 ///
 /// It renders [windowNotes] — a consecutive run of notes from a
-/// [KeyboardLayout.visibleWindow] — with proper white/black key geometry. The
-/// target note gets a glowing highlight ("press this one"); when the mic hears
-/// a different note, [detectedNote] is marked and an [arrow] shows which way to
-/// move. In acoustic mode [onNote] is null (the keys are a picture, not an
-/// input); on-screen practice still passes a callback so keys are tappable.
+/// [KeyboardLayout] — with proper white/black key geometry. The target note gets
+/// a glowing highlight ("press this one"); when the mic hears a different note,
+/// [detectedNote] is marked and an [arrow] shows which way to move. In acoustic
+/// mode [onNote] is null (the keys are a picture, not an input); on-screen
+/// practice still passes a callback so keys are tappable.
 class IllustratedKeyboard extends StatelessWidget {
   const IllustratedKeyboard({
     super.key,
@@ -24,6 +24,10 @@ class IllustratedKeyboard extends StatelessWidget {
   });
 
   /// Consecutive note names to draw, e.g. `['C4','C#4','D4', ...]`.
+  ///
+  /// For the black-key grouping to read correctly this should come from
+  /// [KeyboardLayout.octaveAlignedWindow] (or any slice that starts on a C);
+  /// a slice starting mid-octave renders a keyboard that does not exist.
   final List<String> windowNotes;
 
   /// The note the child should play next (glowing highlight).
@@ -40,15 +44,43 @@ class IllustratedKeyboard extends StatelessWidget {
 
   final double height;
 
-  static const _whiteKeyColors = [
-    Color(0xFFEF5350),
-    Color(0xFFFFCA28),
-    Color(0xFF66BB6A),
-    Color(0xFF42A5F5),
-    Color(0xFFAB47BC),
-    Color(0xFFFF7043),
-    Color(0xFF26C6DA),
+  /// Narrowest key (in logical pixels) that still gets its full note name.
+  ///
+  /// Below this the label would be squeezed to nothing on a wide window — a
+  /// 4-octave window on a phone gives ~28 px per white key — so only the C
+  /// anchors keep a (single-letter) label and the rest stay blank. Octave
+  /// anchors plus the black-key grouping still tell the child where they are.
+  static const double _labelCutoff = 34;
+
+  static const List<Color> _pitchClassColors = [
+    Color(0xFFEF5350), // C
+    Color(0xFFF4511E), // C#
+    Color(0xFFFFCA28), // D
+    Color(0xFFFFA726), // D#
+    Color(0xFF66BB6A), // E
+    Color(0xFF42A5F5), // F
+    Color(0xFF3949AB), // F#
+    Color(0xFFAB47BC), // G
+    Color(0xFF7E57C2), // G#
+    Color(0xFFFF7043), // A
+    Color(0xFF8D6E63), // A#
+    Color(0xFF26C6DA), // B
   ];
+
+  /// The colour for [note], derived from its pitch class.
+  static Color colorForNote(String note) {
+    final midi = midiFromNote(note);
+    if (midi == null) return TamaColors.ink;
+    return colorForPitchClass(midi);
+  }
+
+  /// The colour for the pitch class of [midi].
+  ///
+  /// Exposed so another widget can colour a raw MIDI number without restating
+  /// the table (and drifting from it) — the adventure map's melody ribbon does
+  /// exactly that.
+  static Color colorForPitchClass(int midi) =>
+      _pitchClassColors[((midi % 12) + 12) % 12];
 
   @override
   Widget build(BuildContext context) {
@@ -72,8 +104,8 @@ class IllustratedKeyboard extends StatelessWidget {
               // White keys.
               Row(
                 children: [
-                  for (var i = 0; i < whiteKeys.length; i++)
-                    Expanded(child: _whiteKey(whiteKeys[i], i)),
+                  for (final note in whiteKeys)
+                    Expanded(child: _whiteKey(note, whiteWidth)),
                 ],
               ),
               // Black keys, positioned over the seam after their white neighbour.
@@ -128,9 +160,11 @@ class IllustratedKeyboard extends StatelessWidget {
     );
   }
 
-  Widget _whiteKey(String note, int index) {
+  Widget _whiteKey(String note, double keyWidth) {
     final isTarget = note == targetNote;
-    final base = _whiteKeyColors[index % _whiteKeyColors.length];
+    final base = colorForNote(note);
+    final showName = keyWidth >= _labelCutoff;
+    final label = showName ? note : (midiFromNote(note)! % 12 == 0 ? 'C' : '');
     return Container(
       key: Key('key-$note'),
       margin: const EdgeInsets.symmetric(horizontal: 1),
@@ -146,14 +180,22 @@ class IllustratedKeyboard extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              note,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: isTarget ? Colors.white : Colors.black54,
-              ),
-            ),
+            child: label.isEmpty
+                // A FittedBox around an empty Text lays out at zero width and
+                // trips an assertion, so an unlabelled key carries no child at
+                // all rather than a scaled-down empty string.
+                ? null
+                : FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isTarget ? Colors.white : Colors.black54,
+                      ),
+                    ),
+                  ),
           ),
         ),
       ),
@@ -170,7 +212,8 @@ class IllustratedKeyboard extends StatelessWidget {
         color: isTarget ? TamaColors.emerald : const Color(0xFF212121),
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(6)),
         border: Border.all(
-            color: isTarget ? TamaColors.emerald : Colors.black, width: 2),
+            color: isTarget ? TamaColors.emerald : colorForNote(note),
+            width: 2),
       ),
       child: _tapTarget(
         note,
@@ -178,13 +221,18 @@ class IllustratedKeyboard extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              note,
-              style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white70),
-            ),
+            child: width < _labelCutoff
+                ? null
+                : FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      note,
+                      style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white70),
+                    ),
+                  ),
           ),
         ),
       ),
