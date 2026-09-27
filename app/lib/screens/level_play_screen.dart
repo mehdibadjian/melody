@@ -9,6 +9,7 @@ import 'package:melody_app/domain/session/level_session_flow.dart';
 import 'package:melody_app/providers.dart';
 import 'package:melody_app/theme/tama_theme.dart';
 import 'package:melody_app/widgets/piano_keyboard.dart';
+import 'package:melody_app/widgets/song_demo_dialog.dart';
 
 /// On-screen-keyboard play screen: the child taps notes on the device.
 ///
@@ -146,7 +147,22 @@ class _LevelPlayScreenState extends ConsumerState<LevelPlayScreen> {
     final targetNote = _flow.targetNote ?? notes.last;
     final done = _flow.notesCleared;
     return Scaffold(
-      appBar: AppBar(title: Text(widget.level.name)),
+      appBar: AppBar(
+        title: Text(widget.level.name),
+        actions: [
+          IconButton(
+            key: const Key('hear-it'),
+            tooltip: 'Hear it first',
+            // A dialog over the board, so the run is simply not tapped while it
+            // is up: nothing to pause, and the child comes back to exactly the
+            // note they were on. Same button as the acoustic screen, because a
+            // child who wants to hear the tune should not have to know which
+            // play mode they are in to find it.
+            onPressed: () => SongDemoDialog.show(context, widget.level),
+            icon: const Icon(Icons.headphones),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [

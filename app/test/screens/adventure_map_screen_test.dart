@@ -9,6 +9,7 @@ import 'package:melody_app/providers.dart';
 import 'package:melody_app/screens/acoustic_practice_screen.dart';
 import 'package:melody_app/screens/adventure_map_screen.dart';
 import 'package:melody_app/screens/level_play_screen.dart';
+import 'package:melody_app/widgets/song_demo_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../support/fake_mic.dart';
@@ -184,6 +185,15 @@ void main() {
     expect(find.text('Notes 2'), findsOneWidget);
   });
 
+  /// The sheet is scrollable, so on a short viewport a mode row can sit below
+  /// the fold; scroll it into view rather than tapping blind.
+  Future<void> tapMode(WidgetTester tester, Key key) async {
+    await tester.ensureVisible(find.byKey(key));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(key));
+    await tester.pumpAndSettle();
+  }
+
   group('lesson play-mode chooser', () {
     Future<void> openChooser(
         WidgetTester tester, ProviderContainer container) async {
@@ -228,6 +238,67 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(LevelPlayScreen), findsOneWidget);
+    });
+
+    testWidgets('hearing the tune is on the play screens, not a third mode',
+        (tester) async {
+      // It was offered here first, as a sibling of the two play modes. That
+      // asked a child to decide how they want to play *before* they could hear
+      // the song, and left the real-keyboard and on-screen screens with no way
+      // to listen once they were already in.
+      final container = await makeContainer(
+        lessonsFuture: Future<ContentDocument>.value(testDoc),
+      );
+      await openChooser(tester, container);
+
+      expect(find.byKey(const Key('play-mode-demo')), findsNothing);
+      expect(find.byType(SongDemoDialog), findsNothing);
+
+      await tapMode(tester, const Key('play-mode-on-screen'));
+      expect(find.byKey(const Key('hear-it')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('hear-it')));
+      await tester.pumpAndSettle();
+      // A dialog over the board, not a pushed route: the run the child was
+      // about to take is still there when this closes.
+      expect(find.byType(SongDemoDialog), findsOneWidget);
+      expect(find.byKey(const Key('demo-play')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('demo-close')));
+      await tester.pumpAndSettle();
+      expect(find.byType(SongDemoDialog), findsNothing);
+      expect(find.byType(LevelPlayScreen), findsOneWidget);
+    });
+
+    testWidgets('the demo is the arrangement that was selected, not the first',
+        (tester) async {
+      // GOLDEN has three arrangements at three tempos. A demo that always played
+      // levels.first would show the wrong speed for the one the child picked.
+      final container = await makeContainer(
+        lessonsFuture: Future<ContentDocument>.value(songDoc),
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(buildApp(container: container));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('GOLDEN'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('level-choice-golden-hard')));
+      await tester.pumpAndSettle();
+      await tapMode(tester, const Key('play-mode-on-screen'));
+      await tester.tap(find.byKey(const Key('hear-it')));
+      await tester.pumpAndSettle();
+
+      // The screen behind also names the arrangement in its app bar, so assert
+      // the dialog's own title rather than a substring on the whole tree.
+      expect(find.text('Listen to Hard - the full anthem'), findsOneWidget);
+      // The hard arrangement's own tempo, not the beginner one's 92. The meter
+      // rendering itself is covered by song_demo_dialog_test.
+      expect(tester.widget<Text>(find.byKey(const Key('demo-tempo'))).data,
+          contains('120'));
+
+      await tester.tap(find.byKey(const Key('demo-close')));
+      await tester.pumpAndSettle();
     });
 
     testWidgets('a single-level song shows no arrangement picker',

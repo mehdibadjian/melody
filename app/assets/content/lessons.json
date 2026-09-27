@@ -224,6 +224,8 @@
           "type": "standard",
           "requiredNotes": ["G4", "G4", "A4", "B4", "G4", "G4", "A4", "B4", "D5", "B4", "A4", "G4", "A4", "G4", "E4", "D4", "B4", "B4", "B4", "B4", "C5", "C5", "C5", "C5", "B4", "A4", "G4", "A4", "B4", "D4", "D4", "D4", "E4", "G4", "G4", "A4", "B4", "A4", "G4", "D4", "D4", "D4", "E4", "G4", "A4", "B4", "A4", "G4"],
           "tempoBpm": 92,
+          "meter": { "beatsPerMeasure": 4, "beatUnit": 4, "dotted": true, "notesPerBeat": 3 },
+          "songTempoBpm": 123,
           "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 36 },
           "rewardPayout": { "stars": 3, "noteCurrency": 5 }
         },
@@ -233,6 +235,8 @@
           "type": "standard",
           "requiredNotes": ["G4", "G4", "A4", "B4", "G4", "G4", "A4", "B4", "D5", "B4", "A4", "G4", "A4", "G4", "E4", "D4", "B4", "B4", "B4", "B4", "B4", "B4", "B4", "B4", "C5", "C5", "C5", "C5", "C5", "C5", "C5", "C5", "B4", "A4", "G4", "A4", "B4", "D5", "D5", "E5", "G5", "G5", "A5", "B5", "A5", "G5", "D5", "D5", "E5", "G5", "A5", "B5", "A5", "G5"],
           "tempoBpm": 108,
+          "meter": { "beatsPerMeasure": 4, "beatUnit": 4, "dotted": true, "notesPerBeat": 3 },
+          "songTempoBpm": 123,
           "successThreshold": { "minAccuracy": 0.75, "minNotesHit": 40 },
           "rewardPayout": { "stars": 4, "noteCurrency": 6 }
         },
@@ -242,6 +246,8 @@
           "type": "boss_battle",
           "requiredNotes": ["G4", "G5", "A4", "A5", "G4", "G5", "A4", "A5", "D5", "D6", "B4", "B5", "A4", "A5", "G4", "G5", "B4", "B4", "B4", "B4", "B4", "B4", "B4", "B4", "C5", "C5", "C5", "C5", "C5", "C5", "C5", "C5", "B4", "A4", "G4", "A4", "B4", "D4", "G4", "B4", "D5", "E4", "G4", "B4", "E5", "C4", "E4", "G4", "C5", "D4", "F#4", "A4", "D5", "G5", "G5", "G5", "G5", "G5", "G5", "G5", "G5", "A5", "A5", "A5", "A5", "A5", "A5", "A5", "A5", "B5", "B5", "B5", "B5", "B5", "B5", "B5", "B5", "D6", "D6", "D6", "D6", "D6", "D6", "D6", "D6"],
           "tempoBpm": 120,
+          "meter": { "beatsPerMeasure": 4, "beatUnit": 4, "dotted": true, "notesPerBeat": 3 },
+          "songTempoBpm": 123,
           "successThreshold": { "minAccuracy": 0.75, "minNotesHit": 64 },
           "rewardPayout": { "stars": 6, "noteCurrency": 9 }
         }

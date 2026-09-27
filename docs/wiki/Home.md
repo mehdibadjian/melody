@@ -30,7 +30,14 @@ AdventureMapScreen  (lesson list + daily chest)
                         AcousticPracticeController ─── SongCoach ────┘
                                           ▲
               MicCapture ─▶ MicAnalyzer ─▶ PitchDetector ─▶ AcousticInstrument
+
+Either play screen ─ "Hear it" ─▶ SongDemoDialog ─▶ SongDemoPlayer (timeline)
 ```
+
+Hearing the tune is a button on both play screens rather than a third play mode:
+a child usually wants it *after* deciding how to play, mid-run, when they cannot
+find a note. On the acoustic screen the mic stops for the listen and restarts
+after it, because the demo comes out of the same speaker the mic is pointed at.
 
 `PianoKeyboard` is not a second keyboard — it is `IllustratedKeyboard` rendering
 a window onto the same 61-key board, so both modes ask for the same keys. Both

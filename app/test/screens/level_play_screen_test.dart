@@ -239,6 +239,70 @@ void main() {
     });
   });
 
+  group('Hear it', () {
+    /// The screen's own engine, initialised so a test can prove the demo really
+    /// sounded this level's notes rather than silently doing nothing.
+    Future<({SynthAudioEngine engine, ProviderContainer container})>
+        harnessWithEngine() async {
+      final prefs = await SharedPreferences.getInstance();
+      final engine = SynthAudioEngine();
+      await engine.initialize();
+      return (
+        engine: engine,
+        container: ProviderContainer(overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          audioEngineProvider.overrideWith((ref) => engine),
+        ]),
+      );
+    }
+
+    testWidgets('the on-screen board can hear its own tune', (tester) async {
+      final h = await harnessWithEngine();
+      addTearDown(h.container.dispose);
+      await tester.pumpWidget(buildScreen(h.container));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('hear-it')));
+      await tester.pumpAndSettle();
+      expect(find.text('Listen to Three Friends'), findsOneWidget);
+      expect(tester.widget<Text>(find.byKey(const Key('demo-tempo'))).data,
+          contains('80'));
+
+      await tester.tap(find.byKey(const Key('demo-play')));
+      // Count-in is a full bar: at 80 in 4/4 that is 3000ms of clicks before
+      // note 0, so 3.1s lands exactly on the first melody note.
+      await tester.pump(const Duration(milliseconds: 3100));
+      expect(h.engine.lastPlayedNote, 'C4');
+
+      await tester.tap(find.byKey(const Key('demo-close')));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('a listen does not disturb the run behind it', (tester) async {
+      // The whole reason this lives on the play screens: a child mid-run who
+      // cannot find the note wants to hear it *now*, without losing their place
+      // or having the dialog's keys swallow a tap.
+      final h = await harnessWithEngine();
+      addTearDown(h.container.dispose);
+      await tester.pumpWidget(buildScreen(h.container));
+      await tester.pumpAndSettle();
+
+      await playNotes(tester, ['C4']);
+      expect(find.text('1 / 3'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('hear-it')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('demo-close')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('1 / 3'), findsOneWidget);
+      expect(targetText(tester), 'D4');
+      await playNotes(tester, ['D4', 'E4']);
+      expect(find.text('You did it!'), findsOneWidget);
+      await dismissToast(tester);
+    });
+  });
+
   group('LevelPlayScreen analytics wiring', () {
     testWidgets('level run appends analytics events to the store',
         (tester) async {

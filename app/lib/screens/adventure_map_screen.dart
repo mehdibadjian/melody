@@ -10,6 +10,10 @@ import 'level_play_screen.dart';
 
 /// How the child wants to play a lesson: on their own electric piano (the app
 /// listens through the mic and coaches) or on the on-screen keyboard.
+///
+/// Hearing the tune is deliberately not a third mode here. It is something a
+/// child wants *after* they have picked how they are playing, next to the keys
+/// they are about to use, so both play screens carry a Hear it button.
 enum PlayMode { realKeyboard, onScreen }
 
 class AdventureMapScreen extends ConsumerWidget {
