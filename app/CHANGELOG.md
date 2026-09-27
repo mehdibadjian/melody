@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/mehdibadjian/melody/compare/v1.6.3...v1.7.0) (2026-09-27)
+
+
+### Features
+
+* **brand:** adopt the Tama palette and rename the app to Tama Melody ([#39](https://github.com/mehdibadjian/melody/issues/39)) ([54ecfed](https://github.com/mehdibadjian/melody/commit/54ecfed5ceeda4ec231babc6b69310dbf05cd413))
+
 ## [1.6.3](https://github.com/mehdibadjian/melody/compare/v1.6.2...v1.6.3) (2026-09-27)
 
 
