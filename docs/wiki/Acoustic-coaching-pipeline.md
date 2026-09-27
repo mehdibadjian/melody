@@ -114,15 +114,35 @@ note. Consequences worth remembering:
 ## The keyboard the child looks at
 
 `IllustratedKeyboard` (`widgets/illustrated_keyboard.dart`) is a **picture**, not
-an input: in acoustic mode `onNote` is null. It renders a 15-note sliding window
-from `KeyboardLayout.visibleWindow()` — a full 61-key board does not fit on a
-phone — centred on the current target, with the target glowing, the detected
-note marked in orange, and the `▲`/`▼` cue.
+an input: in acoustic mode `onNote` is null. It renders a sliding window — a
+full 61-key board does not fit on a phone — anchored to a C and containing the
+current target, with the target glowing, the detected note marked in orange, and
+the `▲`/`▼` cue. The window comes from
+`KeyboardLayout.octaveAlignedWindow(target, octaves: 2)` (25 keys). It is
+C-anchored rather than merely centred because a slice that starts mid-octave has
+no black key between its first two white keys, so the 2-and-3 black-key grouping
+that tells a child where C is repeats one white key early and drifts off the
+highlighted note. Key colours are indexed by pitch class (`midi % 12`,
+`IllustratedKeyboard.colorForNote`), so a note is the same colour in every
+octave; an earlier `index % 7` over the white keys made each octave's C a
+different colour.
+
+Below ~34 px of key width the note names are dropped and only the C anchors keep
+a single-letter label, so a wide window on a narrow screen stays readable instead
+of clipping its text.
 
 `KeyboardLayout` (`domain/piano/piano_layout.dart:70`) declares 61-, 76- and
 88-key boards from an inclusive MIDI range; white/black counts and note lists are
 derived so they cannot disagree with the range. **Only `sixtyOne` is used and
 rendered today** — the other two are geometry that no code path selects yet.
+`visibleWindow()` (a centred, mid-octave slice) is still exported and tested but
+no production code path calls it.
+
+The acoustic screen swaps its layout with `OrientationBuilder`: portrait stacks
+the coaching panel above the keys (the board keeps its historical 30%-of-screen
+height), landscape puts them side by side and gives the keys the full remaining
+height, because a phone in landscape is already too short for stacked text plus a
+keyboard.
 
 ## The testability seam
 

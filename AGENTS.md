@@ -15,7 +15,7 @@ Agent context for the **melody** repository.
 - **Working directory:** `/workspace/project/melody`
 - **Remote:** `https://github.com/mehdibadjian/melody.git` (origin)
 - **Default branch:** `main`
-- **GitHub CLI is NOT installed** — use `git` and the GitHub REST API via `curl` with `$GITHUB_TOKEN`.
+- **GitHub CLI is installed** (`gh 2.74.1`, authenticated as `mehdibadjian` with `repo` scope as of 2026-09-27) — `gh pr create`/`gh pr view`/`gh api` work, as does the REST API via `curl` with `$GITHUB_TOKEN`. An earlier note said the CLI was absent; that was true of a previous sandbox image, not this one.
 
 ## Project
 
@@ -60,10 +60,10 @@ A children's music-learning app (ages 6–10) specified via a PRD
 - The user has approved direct pushes to `main` **only when explicitly stated**;
   otherwise use: build → push feature branch → PR → verify → merge.
 - Never push directly to `main` unless the user explicitly asks.
-- Use `git` (not `gh` — the GitHub CLI is not installed) for VCS operations;
-  `git --no-pager` **works** in this environment (an earlier note claimed
-  otherwise — that was wrong). For PR/issue operations use the GitHub REST API
-  via `curl` with `$GITHUB_TOKEN` (read *and* write both work — see below).
+- Use `git` for VCS operations; `git --no-pager` **works** in this environment
+  (an earlier note claimed otherwise — that was wrong). For PR/issue operations
+  either `gh` or the GitHub REST API via `curl` with `$GITHUB_TOKEN` works (read
+  *and* write both work — see below).
 - **Merging to `main` triggers a release cascade:** `release-please.yml`
   (`on: push: main`) reads Conventional Commit types and, on a `feat:`/`fix:`,
   cuts a version, opens/auto-merges a release PR, then dispatches `publish.yml`
@@ -142,8 +142,13 @@ A children's music-learning app (ages 6–10) specified via a PRD
   this way; see `epic-2/android-release-build-fix`). Local repro: install Java
   17 + Android SDK 34 (Gradle wrapper 8.3 does not run on Java 21), then
   `flutter config --android-sdk <path> --jdk-dir <jdk17>` and build.
-- Flutter SDK is at `/opt/flutter` in the sandbox (3.24.3 stable / Dart 3.5.3);
-  add `/opt/flutter/bin` to `PATH`. `Color.withValues` does NOT exist on this
+- **The Flutter SDK is NOT preinstalled in a fresh sandbox** despite this note
+  previously claiming `/opt/flutter` exists. Install it first (~660 MB download,
+  works from this network):
+  `curl -sSL -o /tmp/f.tar.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.3-stable.tar.xz && tar xf /tmp/f.tar.xz -C /opt && git config --global --add safe.directory /opt/flutter`
+  then add `/opt/flutter/bin` to `PATH` and run `flutter pub get` in `app/`.
+  With it installed the full CI gate reproduces locally in ~20 s of tests, so
+  there is no reason to push unverified. (3.24.3 stable / Dart 3.5.3.) `Color.withValues` does NOT exist on this
   version — use `withOpacity`.
 
 ## Epic 2 — acoustic real-keyboard coaching (2026-09-26)

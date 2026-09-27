@@ -69,6 +69,8 @@ every note has a bundled WAV.
 
 - `boss_battle` is a valid, parsed type and the map renders a 🔥 icon for it —
   but **0 boss levels ship**. The mechanic is schema, not gameplay, yet.
+  (`LessonQuestTile` also draws a bolt on the badge and a diamond pip for a boss
+  level; both are only exercised by tests until boss content ships.)
 - Audio covers naturals C4–B5 only (`assets/audio/notes/`, 14 WAVs). No sharps
   or flats can be authored today: `AssetAudioEngine.playNote` silently returns
   for anything outside `NoteFrequency._frequencies`, so an accidental would
