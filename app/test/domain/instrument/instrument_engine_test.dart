@@ -103,11 +103,42 @@ void main() {
       session.submit(const NoteEvent(note: 'D4', timestampMs: 100)); // hit
       session
           .submit(const NoteEvent(note: 'X4', timestampMs: 200)); // pitch miss
-      session.submit(const NoteEvent(note: 'F4', timestampMs: 350)); // hit
-      expect(session.hits, 3);
-      expect(session.totalAttempts, 4);
-      expect(session.accuracy, closeTo(0.75, 0.001));
+      // A miss holds the player on the same note, so the next correct tap is
+      // still E4 — this is what makes one fumble cost a tap rather than a song.
+      session.submit(const NoteEvent(note: 'E4', timestampMs: 350)); // hit
+      session.submit(const NoteEvent(note: 'F4', timestampMs: 400)); // hit
+      expect(session.hits, 4);
+      expect(session.totalAttempts, 5);
+      expect(session.accuracy, closeTo(0.8, 0.001));
       expect(session.complete, isTrue);
+    });
+
+    test('a miss does not advance, so later correct taps still count', () {
+      // The regression this pins: the session used to step past a miss, which
+      // meant the child's next correct note was judged against the note after
+      // it. One early slip therefore cascaded and a song played right could
+      // score 0%.
+      final session = KeyboardInstrument().startSession(['C4', 'D4', 'E4']);
+      session.submit(const NoteEvent(note: 'G4', timestampMs: 0));
+      expect(session.position, 0, reason: 'a miss must not consume a note');
+      expect(session.nextExpectedNote, 'C4');
+      for (final note in ['C4', 'D4', 'E4']) {
+        session.submit(NoteEvent(note: note, timestampMs: 0));
+      }
+      expect(session.hits, 3);
+      expect(session.complete, isTrue);
+      expect(session.accuracy, closeTo(0.75, 0.001));
+    });
+
+    test('repeating a wrong tap cannot finish or crash a level', () {
+      final session = KeyboardInstrument().startSession(['C4', 'D4']);
+      for (var i = 0; i < 50; i++) {
+        session.submit(const NoteEvent(note: 'G4', timestampMs: 0));
+      }
+      expect(session.complete, isFalse);
+      expect(session.hits, 0);
+      expect(session.totalAttempts, 50);
+      expect(session.nextExpectedNote, 'C4');
     });
 
     test('session passes when thresholds met (PRD: success thresholds)', () {
