@@ -135,4 +135,135 @@ void main() {
       expect(window, hasLength(25));
     });
   });
+
+  group('octaveAlignedWindow', () {
+    test('starts on a C, and ends on one wherever a full octave fits', () {
+      final layout = KeyboardLayout.sixtyOne;
+      for (final target in layout.notes) {
+        final window = layout.octaveAlignedWindow(target);
+        expect(midiFromNote(window.first)! % 12, 0,
+            reason: 'window for $target starts on ${window.first}');
+        // The 61-key board spans 5 whole octaves, so every default-width window
+        // can end on a C. Boards with a partial top octave are covered below.
+        expect(midiFromNote(window.last)! % 12, 0,
+            reason: 'window for $target ends on ${window.last}');
+      }
+    });
+
+    test('contains the target for every key on the board', () {
+      final layout = KeyboardLayout.sixtyOne;
+      for (final target in layout.notes) {
+        expect(layout.octaveAlignedWindow(target), contains(target),
+            reason: 'target $target must be on screen');
+      }
+    });
+
+    test('is exactly two octaves of keys wide', () {
+      final layout = KeyboardLayout.sixtyOne;
+      // C4 is mid-board, so no clamping applies.
+      final window = layout.octaveAlignedWindow('C4');
+      expect(window, hasLength(25));
+      expect(window.first, 'C3');
+      expect(window.last, 'C5');
+    });
+
+    test('never renders a phantom black-key group', () {
+      // The concrete bug: a centred 15-key window starting on E has no black key
+      // between its first two white keys, so the 2-and-3 black-key pattern that
+      // tells a child where C is repeats one white key early and drifts off the
+      // highlighted note. A C-anchored window cannot produce that shape.
+      final layout = KeyboardLayout.sixtyOne;
+      for (final target in layout.notes) {
+        final window = layout.octaveAlignedWindow(target);
+        final whites =
+            window.where((n) => !isBlackKeyMidi(midiFromNote(n)!)).toList();
+        // Every white key except the final C must be followed by a black key,
+        // and the only unpaired ones are E and B.
+        for (var i = 0; i < whites.length - 1; i++) {
+          final pc = midiFromNote(whites[i])! % 12;
+          final paired = isBlackKeyMidi(midiFromNote(whites[i])! + 1);
+          expect(paired, pc != 4 && pc != 11,
+              reason: '${whites[i]} in window for $target');
+        }
+      }
+    });
+
+    test('clamps to the top of the board for a high target', () {
+      final layout = KeyboardLayout.sixtyOne;
+      final window = layout.octaveAlignedWindow('C7');
+      expect(window.last, 'C7');
+      expect(window.first, 'C5');
+      expect(window, contains('C7'));
+    });
+
+    test('clamps to the bottom of the board for a low target', () {
+      final layout = KeyboardLayout.sixtyOne;
+      final window = layout.octaveAlignedWindow('C2');
+      expect(window.first, 'C2');
+      expect(window.last, 'C4');
+    });
+
+    test('honours the requested octave count', () {
+      final layout = KeyboardLayout.sixtyOne;
+      expect(layout.octaveAlignedWindow('C4', octaves: 1), hasLength(13));
+      expect(layout.octaveAlignedWindow('C4', octaves: 4), hasLength(49));
+    });
+
+    test('clamps a nonsense octave count', () {
+      final layout = KeyboardLayout.sixtyOne;
+      expect(layout.octaveAlignedWindow('C4', octaves: 0), hasLength(13));
+      // Wider than the board: the window stops at the board edges.
+      expect(layout.octaveAlignedWindow('C4', octaves: 8), hasLength(61));
+    });
+
+    test('handles an unparseable target without dropping keys', () {
+      final layout = KeyboardLayout.sixtyOne;
+      final window = layout.octaveAlignedWindow('nope');
+      expect(window, isNotEmpty);
+      expect(window.first, startsWith('C'));
+    });
+
+    test('works on the 88-key board', () {
+      final layout = KeyboardLayout.eightyEight;
+      for (final target in ['C4', 'A4', 'B7', 'C8']) {
+        final window = layout.octaveAlignedWindow(target);
+        expect(window, contains(target), reason: 'target $target');
+        expect(midiFromNote(window.first)! % 12, 0);
+        expect(layout.containsNote(window.last), isTrue);
+      }
+    });
+
+    test('holds an upper-octave target in a narrow one-octave window', () {
+      // A note from C# up to F is the awkward band: centring a one-octave window
+      // on the C below it ends the window short of the note, so the child's own
+      // target would be off screen. The anchor moves up to that note's octave.
+      final layout = KeyboardLayout.sixtyOne;
+      for (final target in ['C#4', 'D4', 'D#4', 'E4', 'F4']) {
+        final window = layout.octaveAlignedWindow(target, octaves: 1);
+        expect(window, contains(target), reason: target);
+        expect(midiFromNote(window.first)! % 12, 0);
+        expect(window, hasLength(13));
+      }
+    });
+
+    test('keeps a target in a board with a partial top octave', () {
+      // A 76-key board tops out at G7, so no C-anchored two-octave window
+      // reaches it. The window gives up its C end rather than drop the note.
+      final layout = KeyboardLayout.seventySix;
+      final window = layout.octaveAlignedWindow('G7', octaves: 2);
+      expect(window, contains('G7'));
+      expect(midiFromNote(window.first)! % 12, 0);
+      expect(window.last, 'G7');
+      expect(layout.containsNote(window.last), isTrue);
+    });
+
+    test('clamps a target below the board\'s first C up to it', () {
+      // A C-anchored window cannot start on an 88-key board's partial bottom
+      // octave, so A0 and B0 render as the C1 window they belong to.
+      final layout = KeyboardLayout.eightyEight;
+      final window = layout.octaveAlignedWindow('A0');
+      expect(window.first, 'C1');
+      expect(window, isNot(contains('A0')));
+    });
+  });
 }
