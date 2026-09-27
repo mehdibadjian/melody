@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/mehdibadjian/melody/compare/v1.7.1...v1.8.0) (2026-09-27)
+
+
+### Features
+
+* **content:** ship GOLDEN as a 3-arrangement song (and fix what blocked it) ([#43](https://github.com/mehdibadjian/melody/issues/43)) ([7054e9b](https://github.com/mehdibadjian/melody/commit/7054e9b9428eb90eeace198fcefa036f57126d09))
+
 ## [1.7.1](https://github.com/mehdibadjian/melody/compare/v1.7.0...v1.7.1) (2026-09-27)
 
 
