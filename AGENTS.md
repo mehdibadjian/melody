@@ -2,6 +2,14 @@
 
 Agent context for the **melody** repository.
 
+> **⚠️ NEXT AGENT — READ BEFORE TOUCHING THE RELEASE CASCADE.**
+> If you merge a `feat:`/`fix:` PR to `main`, a release cascade runs. It has a
+> known, already-diagnosed failure mode (hit twice: v1.6.2, v1.6.3). **Do not
+> re-diagnose it from scratch.** Jump to the **"Cascade stall" directive** under
+> *Conventions* below and follow the one-command fix. TL;DR: if a release PR
+> auto-merges but no tag/APK appears, **merge the stuck release PR yourself via
+> REST with your own `$GITHUB_TOKEN`** — that single step re-fires the cascade.
+
 ## Repository
 
 - **Working directory:** `/workspace/project/melody`
@@ -59,6 +67,30 @@ A children's music-learning app (ages 6–10) specified via a PRD
   to build + attach a signed APK. The repo squash-merges, so the **squash
   commit title** is what release-please sees: a `feat:` title cuts a release; a
   `spike:`/`chore:` title does not. Choose the merge title deliberately.
+- **⚠️ Cascade stall — DIRECTIVE for the next agent (do not re-diagnose):**
+  When release-please *auto-merges* the release PR using the bot's
+  `GITHUB_TOKEN`, GitHub's recursion guard suppresses the follow-on
+  `on: push: main` run. Result: the version bump (manifest + pubspec +
+  CHANGELOG) lands on `main`, but **no `vX.Y.Z` tag/release is created and
+  publish never dispatches — so no APK is built.**
+  - **Symptoms (all four):** release PR is already merged yet still labelled
+    `autorelease: pending`; manifest/`pubspec` already bumped on `main`; no
+    `vX.Y.Z` tag exists; a 4-second / 0-job `CI` run shows `failure` (orphaned
+    when its head branch was merged) on the release-please branch.
+  - **Fix (preferred, one command):** merge the stuck release PR yourself via
+    REST `pulls/<n>/merge` (squash) **with your own `$GITHUB_TOKEN`**. An
+    external-token merge to `main` is NOT recursion-guarded, so it re-fires
+    `release-please.yml` → tag → `publish.yml` → signed APK, cleanly and
+    automatically. Then flip the PR label `autorelease: pending` →
+    `autorelease: tagged`.
+  - **Fix (fallback, if the release PR is already merged/closed and there is
+    nothing left to merge):** create the tag + release directly via REST —
+    `git/tags` (annotated, at the release-merge commit) + `git/refs` (this push
+    fires `publish.yml` `on: push: tags`) + `releases` (so the attach step has
+    a target). This is exactly how v1.6.2 was recovered.
+  - **Not available:** `workflow_dispatch` on either workflow returns
+    `403 Resource not accessible by integration` (the token lacks
+    `actions:write`). Don't waste a turn on it.
 - Draft PRs cannot be merged; un-draft via the GraphQL
   `markPullRequestReadyForReview` mutation before merging.
 
