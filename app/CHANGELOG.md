@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/mehdibadjian/melody/compare/v1.8.0...v1.8.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* **play:** finish the song, not the taps — one board, one rule, a way back in ([#45](https://github.com/mehdibadjian/melody/issues/45)) ([82005e6](https://github.com/mehdibadjian/melody/commit/82005e6358285aa72fcc038bee720aaaddd30023))
+
 ## [1.8.0](https://github.com/mehdibadjian/melody/compare/v1.7.1...v1.8.0) (2026-09-27)
 
 
