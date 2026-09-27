@@ -257,6 +257,39 @@ void main() {
       expect(layout.containsNote(window.last), isTrue);
     });
 
+    test('holds every invariant for every board, target and width', () {
+      // Exhaustive rather than sampled: the windowing maths is pure and cheap,
+      // so enumerating it retires a whole class of off-by-one that a few
+      // spot-checks would miss.
+      final boards = [
+        KeyboardLayout.sixtyOne,
+        KeyboardLayout.seventySix,
+        KeyboardLayout.eightyEight,
+      ];
+      var cases = 0;
+      for (final board in boards) {
+        final lowC = board.lowestMidi + ((12 - board.lowestMidi % 12) % 12);
+        for (var octaves = 1; octaves <= 8; octaves++) {
+          for (var midi = lowC; midi <= board.highestMidi; midi++) {
+            final target = noteFromMidi(midi);
+            final window = board.octaveAlignedWindow(target, octaves: octaves);
+            cases++;
+            final first = midiFromNote(window.first)!;
+            final last = midiFromNote(window.last)!;
+            expect(window, contains(target),
+                reason: '${board.name} x$octaves target $target');
+            expect(first % 12, 0,
+                reason: '${board.name} x$octaves target $target starts on '
+                    '${window.first}');
+            expect(first, greaterThanOrEqualTo(board.lowestMidi));
+            expect(last, lessThanOrEqualTo(board.highestMidi));
+            expect(last, greaterThanOrEqualTo(first));
+          }
+        }
+      }
+      expect(cases, 1712);
+    });
+
     test('clamps a target below the board\'s first C up to it', () {
       // A C-anchored window cannot start on an 88-key board's partial bottom
       // octave, so A0 and B0 render as the C1 window they belong to.
