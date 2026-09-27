@@ -139,6 +139,14 @@ class KeyboardLayout {
   /// whose top octave is partial (a 76-key board's G7) has no C-anchored window
   /// that reaches it, so there the top edge stops at the board rather than at a
   /// C. Showing the note the child must play outranks ending on a C.
+  ///
+  /// When the target lands exactly on a window's closing C the window shifts up
+  /// an octave to start on it. A one-octave window for C4 could legitimately be
+  /// C3–C4, but that puts the child's note on the last key and leaves C#4 — the
+  /// next note in any ascending run — off screen, so the board appears to jump
+  /// an octave on the next tap. Starting on the target keeps its own black keys
+  /// visible. Only a single-octave window can sit flush against the target, so
+  /// the wider acoustic guide's framing is unchanged.
   List<String> octaveAlignedWindow(String target, {int octaves = 2}) {
     final whole = octaves.clamp(1, 8);
     // A window may not start on a board's partial bottom octave.
@@ -151,7 +159,7 @@ class KeyboardLayout {
     var start = _floorToC(center - span ~/ 2);
     // A note in the top half of its octave falls outside a window centred on
     // the octave below it; re-anchor on the note's own octave instead.
-    if (start + span < center) start = _floorToC(center);
+    if (start + span <= center) start = _floorToC(center);
     if (start < boardLowC) start = boardLowC;
     if (start > lastStart && lastStart >= boardLowC) start = lastStart;
     var end = start + span;
