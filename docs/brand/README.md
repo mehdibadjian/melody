@@ -23,8 +23,8 @@ edit cannot silently drift.
 | `emerald` | `#34D399` | "Correct note" coaching, target key |
 | `lavender` | `#C4B5FD` | Reserved tint |
 
-The seven piano-key colors in `app/lib/widgets/piano_keyboard.dart` and
-`illustrated_keyboard.dart` are **not** branding. They are a note-identification
+The piano-key colors live in `app/lib/widgets/illustrated_keyboard.dart`, which
+`piano_keyboard.dart` reuses for the tappable board. They are **not** branding. They are a note-identification
 aid (C is always red, D always yellow, …) and deliberately stay off the Tama
 palette so they remain distinguishable from one another.
 

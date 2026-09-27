@@ -69,17 +69,21 @@ file and why CI needs no device. The rule is worth preserving on every new file.
 
 **On-screen (`LevelPlayScreen`)** builds a `LevelSessionFlow`
 (`app/lib/domain/session/level_session_flow.dart:10`). Each tap is pushed
-through `submit()` (`:36`), which compares the note to
-`requiredNotes[totalAttempts]`, records per-note mastery, advances the target,
-and on the last note calls `_finish()`: pass/fail against the level's
-`SuccessThreshold`, a `practiceSession` analytics event always, a
-`levelCompleted` event plus payout only on a pass.
+through `submit()` (`:47`), which asks the session what note it is holding the
+child on (`LessonSession.nextExpectedNote`), records per-note mastery for *that*
+note, and moves the instrument's target to the next one. A miss does not advance,
+so the run ends when the song has been played through, never when taps have run
+out. Then `_finish()`: pass/fail against the level's `SuccessThreshold`, a
+`practiceSession` analytics event always, a `levelCompleted` event plus payout
+only on a pass.
 
 **Acoustic (`AcousticPracticeScreen`)** builds an `AcousticPracticeController`
 (`app/lib/domain/coaching/acoustic_practice_controller.dart:68`). It does *not*
-use `LevelSessionFlow`, because the coaching semantics differ: on-screen
-advances past a miss, the coach **holds** the child on the wrong note until they
-get it. Both end at the same place — `applyLevelCompletion` + `recordPracticeDay`
+use `LevelSessionFlow` — the two stacks are separate code — but the rule is now
+the same on both paths: a wrong note **holds** the child where they are until
+they land it. It used to be the one difference between the modes, which meant the
+same mistake was forgiven in one and cost the rest of the song in the other.
+Both end at the same place — `applyLevelCompletion` + `recordPracticeDay`
 on a `PlayerProgress` clone, then `commitSessionProgress`.
 
 The screen-level pattern is identical in both: `initState` clones progress out

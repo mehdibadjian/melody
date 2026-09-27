@@ -32,18 +32,22 @@ AdventureMapScreen  (lesson list + daily chest)
               MicCapture ─▶ MicAnalyzer ─▶ PitchDetector ─▶ AcousticInstrument
 ```
 
-Both modes funnel into the same pure-Dart session/reward/analytics stack, so
+`PianoKeyboard` is not a second keyboard — it is `IllustratedKeyboard` rendering
+a window onto the same 61-key board, so both modes ask for the same keys. Both
+modes also funnel into the same pure-Dart session/reward/analytics stack, so
 adding a guitar or MIDI input means one new `InstrumentInput` impl — no rewrite.
 
 ## Size and shape of the code
 
 | Area | Files | Lines | Notes |
 | --- | --- | --- | --- |
-| `app/lib/domain/` | 21 | 2,257 | Game logic in pure Dart — no Flutter or plugin imports |
-| `app/lib/screens` + `widgets` | 5 | 947 | Flutter UI |
-| `app/lib/` (`main`, `providers`) | 2 | 132 | Composition root |
+| `app/lib/domain/` | 21 | 2,390 | Game logic in pure Dart — no Flutter or plugin imports |
+| `app/lib/screens` + `widgets` | 6 | 1,934 | Flutter UI |
+| `app/lib/` (`main`, `providers`) | 2 | 130 | Composition root |
+| `app/lib/theme/` | 1 | 69 | Tama palette + `ThemeData` |
 | `app/lib/platform/` | 1 | 44 | The only device-specific code in the repo |
-| `app/test/` | 26 | 3,570 | Mirrors the `lib/` tree; tests are larger than the code |
+| `app/test/` | 30 | 5,169 | Mirrors the `lib/` tree; tests are larger than the code |
+| `app/assets/audio/notes/` | 61 WAVs | ~1 MB | One sample per key of the 61-key board |
 
 Repo layout, myLoop submodule, and agent workflow live in
 [`AGENTS.md`](../../AGENTS.md). Story-level history lives in
