@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2](https://github.com/mehdibadjian/melody/compare/v1.6.1...v1.6.2) (2026-09-27)
+
+
+### Bug Fixes
+
+* **play:** replace modal result dialog with a non-blocking toast ([#33](https://github.com/mehdibadjian/melody/issues/33)) ([3c6d12a](https://github.com/mehdibadjian/melody/commit/3c6d12ab8cdb9a9a258885a89ca9615a6232eda9))
+
 ## [1.6.1](https://github.com/mehdibadjian/melody/compare/v1.6.0...v1.6.1) (2026-09-26)
 
 
