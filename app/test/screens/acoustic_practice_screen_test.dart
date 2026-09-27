@@ -5,6 +5,7 @@ import 'package:melody_app/domain/audio/audio_engine.dart';
 import 'package:melody_app/domain/content/content_models.dart';
 import 'package:melody_app/providers.dart';
 import 'package:melody_app/screens/acoustic_practice_screen.dart';
+import 'package:melody_app/domain/piano/piano_layout.dart';
 import 'package:melody_app/widgets/illustrated_keyboard.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -153,5 +154,59 @@ void main() {
 
     // 1 of 7 notes done.
     expect(find.textContaining('1 / 7'), findsOneWidget);
+  });
+  group('orientation', () {
+    // The widget-test surface is 800x600, which is already landscape; these
+    // pin both orientations explicitly so the layout swap is actually covered.
+    Future<void> pumpAt(WidgetTester tester, Size size) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(await app(mic));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('landscape puts the keys beside the coaching panel',
+        (tester) async {
+      await pumpAt(tester, const Size(900, 420));
+      final panel = tester.getRect(find.byKey(const Key('coaching-message')));
+      final keys = tester.getRect(find.byKey(const Key('keys-layer')));
+      // Side by side: the board occupies the right of the screen and uses most
+      // of its height, instead of a crushed strip under stacked text.
+      expect(keys.left, greaterThan(panel.right));
+      expect(keys.height, greaterThan(420 * 0.6));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('portrait keeps the keys below the panel', (tester) async {
+      await pumpAt(tester, const Size(420, 900));
+      final panel = tester.getRect(find.byKey(const Key('coaching-message')));
+      final keys = tester.getRect(find.byKey(const Key('keys-layer')));
+      expect(keys.top, greaterThan(panel.bottom));
+      // Portrait keeps the established ~30%-of-screen board: the guide is not
+      // flexed, so it falls back to the screen-height fraction rather than
+      // eating every remaining pixel.
+      expect(keys.height, greaterThan(900 * 0.25));
+      expect(keys.height, lessThan(900 * 0.4));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the guide window is anchored to a C', (tester) async {
+      await pumpAt(tester, const Size(420, 900));
+      // The song starts on E4; a centred window would begin mid-octave and
+      // render a keyboard whose black-key pattern does not exist.
+      final keyboard = tester.widget<IllustratedKeyboard>(
+        find.byType(IllustratedKeyboard),
+      );
+      expect(midiFromNote(keyboard.windowNotes.first)! % 12, 0,
+          reason: 'window starts on ${keyboard.windowNotes.first}');
+      expect(keyboard.windowNotes, contains('E4'));
+    });
+
+    testWidgets('landscape does not overflow on a small phone', (tester) async {
+      await pumpAt(tester, const Size(640, 320));
+      await startListening(tester);
+      expect(tester.takeException(), isNull);
+    });
   });
 }
