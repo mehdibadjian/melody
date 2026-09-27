@@ -4,6 +4,7 @@
 library;
 
 import 'package:melody_app/domain/piano/piano_layout.dart';
+import 'package:melody_app/domain/rhythm/song_meter.dart';
 
 /// Difficulty tiers for lessons.
 enum Difficulty { beginner, intermediate, advanced }
@@ -79,6 +80,8 @@ class Level {
     required this.tempoBpm,
     required this.successThreshold,
     required this.rewardPayout,
+    this.meter = SongMeter.simple,
+    this.songTempoBpm,
   });
 
   final String id;
@@ -88,6 +91,19 @@ class Level {
   final int tempoBpm;
   final SuccessThreshold successThreshold;
   final RewardPayout rewardPayout;
+
+  /// How [tempoBpm] is felt: which note gets a click and how many of
+  /// [requiredNotes] fit inside one click. Common time, one note per beat, when
+  /// not authored — so a demo of a 4/4 tune is unchanged by this field existing.
+  final SongMeter meter;
+
+  /// The tempo of the real recording, counted in the same beat as [tempoBpm].
+  ///
+  /// Only meaningful for an arrangement of an existing song, and only useful
+  /// because a practice tempo and a song tempo are different numbers that are
+  /// easy to confuse. When present, the demo says both, so a child hearing a
+  /// slow arrangement is not left believing that is how fast the song is.
+  final int? songTempoBpm;
 
   bool get isBossBattle => type == LevelType.bossBattle;
 
@@ -114,6 +130,10 @@ class Level {
         'type': type == LevelType.bossBattle ? 'boss_battle' : 'standard',
         'requiredNotes': requiredNotes,
         'tempoBpm': tempoBpm,
+        // Only written when it differs from 4/4-with-one-note-per-beat, so
+        // round-tripping the public-domain tunes keeps their existing shape.
+        if (meter != SongMeter.simple) 'meter': meter.toJson(),
+        if (songTempoBpm != null) 'songTempoBpm': songTempoBpm,
         'successThreshold': successThreshold.toJson(),
         'rewardPayout': rewardPayout.toJson(),
       };

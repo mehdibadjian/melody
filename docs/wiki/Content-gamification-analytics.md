@@ -29,6 +29,11 @@ state rather than a half-broken lesson.
       "type": "standard",              // standard | boss_battle
       "requiredNotes": ["C4","C4","G4","G4","A4","A4","G4"],
       "tempoBpm": 84,                  // 40–240, must be an int
+      "meter": {                       // optional, defaults to simple 4/4
+        "beatsPerMeasure": 4, "beatUnit": 4,
+        "dotted": true, "notesPerBeat": 3    // → 12/8
+      },
+      "songTempoBpm": 123,             // optional: the recording's real tempo
       "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 10 },
       "rewardPayout":  { "stars": 4, "noteCurrency": 6 }
     }]
@@ -46,6 +51,9 @@ Validation, exactly as implemented:
 | `difficulty` / `type` from a fixed vocabulary | throws on typos |
 | `requiredNotes` non-empty, all non-empty strings | throws; note *pitch* is not validated here |
 | `tempoBpm` int in 40–240 | throws |
+| `songTempoBpm` absent, or int in 40–240 | throws |
+| `meter` absent ⇒ simple 4/4; else a Map with int `beatsPerMeasure`/`beatUnit`/`notesPerBeat` in 1–16 and bool `dotted` | throws |
+| `dotted` only with `beatUnit` 4 or 8 | throws (a dotted half/quarter divides into three; a dotted whole does not fit a beat) |
 | `minAccuracy` num in 0–1, `minNotesHit` ≥ 0, `stars`/`noteCurrency` ≥ 0 ints | throws |
 | `genre` present ⇒ non-empty; `songTitle`/`attribution` may be blank | `_optionalString` |
 
@@ -53,6 +61,24 @@ Derived, never authored: `Level.noteRange`
 (`content_models.dart`) computes the lowest/highest MIDI across `requiredNotes`,
 ignoring unparseable entries, so the illustrated keyboard can centre its window
 on the song's real span.
+
+### What `meter` is for
+
+`tempoBpm` alone does not define a speed, because it does not say *which note
+value gets the beat*. GOLDEN's printed arrangements carry both `half note = 90`
+and `dotted quarter = 123`, which are the same real pulse about 2.5 % apart; as a
+bare number, `120` could mean four crotchets or three quarters of a bar.
+`SongMeter` (`domain/rhythm/song_meter.dart`) closes that gap: the beat's note
+value, whether it is dotted, and how many melody notes fill it. GOLDEN is
+authored as four dotted-quarter beats of three eighths — `12/8` — so its
+`92 / 108 / 120` are progressive *practice* tempos for that beat, and
+`songTempoBpm: 123` states the recording's real tempo beside them.
+
+Only the listen-first demo (`domain/rhythm/song_demo.dart`,
+`widgets/song_demo_dialog.dart`) consumes `meter`, to space its notes, count-in
+bar and metronome clicks; scoring stays pitch-only, and every song without a
+`meter` keeps the simple 4/4 default. `toJson` omits `meter` when it is the
+default, so documents round-trip unchanged.
 
 ### The shipped library (as of v1.7.1 + GOLDEN)
 

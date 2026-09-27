@@ -9,6 +9,7 @@ import 'package:melody_app/providers.dart';
 import 'package:melody_app/screens/acoustic_practice_screen.dart';
 import 'package:melody_app/screens/adventure_map_screen.dart';
 import 'package:melody_app/screens/level_play_screen.dart';
+import 'package:melody_app/widgets/song_demo_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../support/fake_mic.dart';
@@ -228,6 +229,52 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(LevelPlayScreen), findsOneWidget);
+    });
+
+    testWidgets('Hear it first opens the demo dialog, not a play screen',
+        (tester) async {
+      final container = await makeContainer(
+        lessonsFuture: Future<ContentDocument>.value(testDoc),
+      );
+      await openChooser(tester, container);
+
+      await tester.tap(find.byKey(const Key('play-mode-demo')));
+      await tester.pumpAndSettle();
+
+      // A dialog, not a pushed route: the child came to hear the tune, and the
+      // two play modes they were just looking at must stay one tap away.
+      expect(find.byType(SongDemoDialog), findsOneWidget);
+      expect(find.byType(LevelPlayScreen), findsNothing);
+      expect(find.byKey(const Key('demo-play')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('demo-close')));
+      await tester.pumpAndSettle();
+      expect(find.byType(SongDemoDialog), findsNothing);
+    });
+
+    testWidgets('the demo is the arrangement that was selected, not the first',
+        (tester) async {
+      // GOLDEN has three arrangements at three tempos. A demo that always played
+      // levels.first would show the wrong speed for the one the child picked.
+      final container = await makeContainer(
+        lessonsFuture: Future<ContentDocument>.value(songDoc),
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(buildApp(container: container));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('GOLDEN'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('level-choice-golden-hard')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('play-mode-demo')));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Hard - the full anthem'), findsOneWidget);
+      // The hard arrangement's own tempo, not the beginner one's 92. The meter
+      // rendering itself is covered by song_demo_dialog_test.
+      expect(tester.widget<Text>(find.byKey(const Key('demo-tempo'))).data,
+          contains('120'));
     });
 
     testWidgets('a single-level song shows no arrangement picker',

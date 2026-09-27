@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:melody_app/domain/content/content_models.dart';
+import 'package:melody_app/domain/rhythm/song_meter.dart';
 
 /// Parses and validates lesson content documents against schema v1.
 class ContentParser {
@@ -117,6 +118,17 @@ class ContentParser {
         'tempoBpm must be between $minTempoBpm and $maxTempoBpm',
       );
     }
+    // Optional: the real recording's tempo, so a slow arrangement can say so.
+    // Same range as tempoBpm — it is the same kind of number.
+    final songTempo = raw['songTempoBpm'];
+    if (songTempo != null &&
+        (songTempo is! int ||
+            songTempo < minTempoBpm ||
+            songTempo > maxTempoBpm)) {
+      throw const ContentValidationException(
+        'songTempoBpm must be between $minTempoBpm and $maxTempoBpm',
+      );
+    }
     final thresholdJson = raw['successThreshold'];
     if (thresholdJson is! Map<String, dynamic>) {
       throw const ContentValidationException(
@@ -157,9 +169,52 @@ class ContentParser {
       type: type == 'boss_battle' ? LevelType.bossBattle : LevelType.standard,
       requiredNotes: requiredNotes.cast<String>(),
       tempoBpm: tempo,
+      meter: _parseMeter(raw['meter']),
+      songTempoBpm: songTempo as int?,
       successThreshold: SuccessThreshold(
           minAccuracy: minAccuracy.toDouble(), minNotesHit: minNotesHit),
       rewardPayout: RewardPayout(stars: stars, noteCurrency: noteCurrency),
+    );
+  }
+
+  /// Optional `meter` block: how `tempoBpm` is felt.
+  ///
+  /// Absent means common time with one note per beat, which is what every tune
+  /// written before this field existed actually is — so the whole public-domain
+  /// library keeps its exact current timing without a single JSON edit.
+  /// Present-but-wrong throws: a half-typed meter falling back to 4/4 would
+  /// play the demo at the wrong speed, which is the failure this field exists
+  /// to prevent.
+  static SongMeter _parseMeter(Object? raw) {
+    if (raw == null) return SongMeter.simple;
+    if (raw is! Map<String, dynamic>) {
+      throw const ContentValidationException('meter must be an object');
+    }
+    for (final key in const ['beatsPerMeasure', 'beatUnit', 'notesPerBeat']) {
+      final value = raw[key];
+      if (value != null && (value is! int || value < 1 || value > 16)) {
+        throw ContentValidationException(
+            'meter.$key must be an int between 1 and 16');
+      }
+    }
+    final dotted = raw['dotted'];
+    if (dotted != null && dotted is! bool) {
+      throw const ContentValidationException('meter.dotted must be a bool');
+    }
+    final beatUnit = raw['beatUnit'] as int? ?? 4;
+    // A dotted beat only means "compound" on a quarter or eighth. On anything
+    // else it is a typo that would silently triple the note spacing.
+    if (dotted == true && beatUnit != 4 && beatUnit != 8) {
+      throw ContentValidationException(
+        'meter.dotted only applies to a quarter or eighth beat, not '
+        '$beatUnit',
+      );
+    }
+    return SongMeter(
+      beatsPerMeasure: raw['beatsPerMeasure'] as int? ?? 4,
+      beatUnit: beatUnit,
+      dotted: dotted as bool? ?? false,
+      notesPerBeat: raw['notesPerBeat'] as int? ?? 1,
     );
   }
 

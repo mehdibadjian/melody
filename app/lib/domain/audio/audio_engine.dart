@@ -6,6 +6,11 @@ import 'package:melody_app/domain/piano/piano_layout.dart';
 abstract interface class AudioEngine {
   Future<void> initialize();
   Future<void> playNote(String note);
+
+  /// Metronome click for the demo and count-in. [strong] is the downbeat, so a
+  /// child hears where the bar begins rather than an undifferentiated tick.
+  Future<void> playClick({bool strong = true});
+
   Future<void> dispose();
   bool get isInitialized;
 }
@@ -78,6 +83,16 @@ class AssetAudioEngine implements AudioEngine {
   AssetAudioEngine({AudioPlayer? player}) : _player = player ?? AudioPlayer();
 
   final AudioPlayer _player;
+
+  /// A second deck, because the click has to sound *with* the note it lands on.
+  /// Sharing [_player] would `stop()` the melody note every time the metronome
+  /// ticked, which turns a rhythm demo into a click track with gaps in it.
+  ///
+  /// Built on first use, never in the constructor: an `AudioPlayer` touches the
+  /// platform channel as it is created, so a second eager one turned the
+  /// plugin's absence under `flutter test` into an unhandled error instead of a
+  /// caught one.
+  AudioPlayer? _clickPlayer;
   bool _initialized = false;
 
   @override
@@ -97,20 +112,38 @@ class AssetAudioEngine implements AudioEngine {
   }
 
   @override
+  Future<void> playClick({bool strong = true}) async {
+    if (!_initialized) return;
+    final click = _clickPlayer ??= AudioPlayer();
+    await click.setReleaseMode(ReleaseMode.stop);
+    await click.stop();
+    await click.play(AssetSource(strong ? _strongClickPath : _weakClickPath));
+  }
+
+  static const _strongClickPath = 'audio/clicks/strong.wav';
+  static const _weakClickPath = 'audio/clicks/weak.wav';
+
+  @override
   Future<void> dispose() async {
     _initialized = false;
     await _player.dispose();
+    await _clickPlayer?.dispose();
   }
 }
 
 class SynthAudioEngine implements AudioEngine {
   bool _initialized = false;
   String? _lastPlayedNote;
+  bool? _lastClickStrong;
 
   @override
   bool get isInitialized => _initialized;
 
   String? get lastPlayedNote => _lastPlayedNote;
+
+  /// Which click was last asked for (null until one is played). Lets a widget
+  /// test assert the downbeat is distinguishable without a speaker.
+  bool? get lastClickStrong => _lastClickStrong;
 
   @override
   Future<void> initialize() async {
@@ -124,8 +157,15 @@ class SynthAudioEngine implements AudioEngine {
   }
 
   @override
+  Future<void> playClick({bool strong = true}) async {
+    if (!_initialized) return;
+    _lastClickStrong = strong;
+  }
+
+  @override
   Future<void> dispose() async {
     _initialized = false;
     _lastPlayedNote = null;
+    _lastClickStrong = null;
   }
 }

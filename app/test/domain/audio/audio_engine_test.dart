@@ -146,6 +146,31 @@ void main() {
       });
     });
 
+    test('the metronome click assets exist and are bundled', () {
+      // AssetAudioEngine.playClick resolves two hard-coded paths and returns
+      // quietly when the plugin rejects them, so a typo'd or unregistered click
+      // is a silent dead metronome: the demo still plays notes, just with no
+      // beat. The pubspec entry is checked too, because a file sitting in
+      // assets/ that Flutter was never told to bundle is the same failure.
+      final pubspec = File('pubspec.yaml').readAsStringSync();
+      for (final strong in const [true, false]) {
+        final path = 'assets/audio/clicks/${strong ? 'strong' : 'weak'}.wav';
+        expect(File(path).existsSync(), isTrue, reason: '$path is missing');
+        expect(File(path).lengthSync(), greaterThan(0),
+            reason: '$path is empty');
+        expect(pubspec, contains('assets/audio/clicks/'),
+            reason: '$path is not declared as a bundled asset folder');
+      }
+    });
+
+    test('the two clicks are actually different sounds', () {
+      // A downbeat that sounds like every other beat teaches nothing about
+      // where the bar begins, which is the only reason to have two files.
+      final strong = File('assets/audio/clicks/strong.wav').readAsBytesSync();
+      final weak = File('assets/audio/clicks/weak.wav').readAsBytesSync();
+      expect(strong.length, isNot(weak.length));
+    });
+
     test('adjacent keys are one equal-tempered semitone apart', () {
       // The structural property that makes it a piano at all: every neighbour
       // ratio is 2^(1/12) and every octave exactly doubles, across the whole

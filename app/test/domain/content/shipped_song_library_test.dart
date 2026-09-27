@@ -101,4 +101,49 @@ void main() {
               'beginner, and it is the arrangement the app opens with');
     }
   });
+
+  test('a song arranged slower than the recording says how fast it is', () {
+    // The demo is what a child uses to learn a tune's rhythm, so a practice
+    // tempo has to be labelled as one. `songTempoBpm` is only meaningful next
+    // to a real recording; if it is ever authored equal to the arrangement's
+    // own tempo it is a leftover that makes the UI claim "practice speed" for a
+    // tempo that is not slower, so it must not be in the file at all.
+    for (final lesson in doc.lessons) {
+      for (final level in lesson.levels) {
+        final song = level.songTempoBpm;
+        if (song == null) continue;
+        expect(song, isNot(level.tempoBpm),
+            reason: '${level.id} sets songTempoBpm to its own tempo; drop the '
+                'field instead');
+      }
+    }
+  });
+
+  test('GOLDEN is authored in the song\u0027s real 12/8 pulse', () {
+    // The tune is a 12/8 anthem: four dotted-crotchet beats to a bar, three
+    // eighths to each. Written as plain 4/4 with one note per beat, the demo
+    // plays it at a third of the real speed and the child learns a limping
+    // version of a song they recognise. This is the one shipped arrangement
+    // where the meter is not decoration, so it is pinned here.
+    final golden = doc.lessons.singleWhere((l) => l.id == 'song-golden');
+    for (final level in golden.levels) {
+      expect(level.meter.notation, '12/8', reason: level.id);
+      expect(level.meter.notesPerBeat, 3, reason: level.id);
+      expect(level.meter.beatName, 'dotted quarter', reason: level.id);
+    }
+  });
+
+  test('no arrangement demos faster than the song it comes from', () {
+    // A practice arrangement may be slower than the recording; that is the
+    // point of three of them. Faster would mean the child hears a version of
+    // the tune that does not exist, and the demo stops being reference audio.
+    for (final lesson in doc.lessons) {
+      for (final level in lesson.levels) {
+        final song = level.songTempoBpm;
+        if (song == null) continue;
+        expect(level.tempoBpm, lessThanOrEqualTo(song),
+            reason: '${level.id} is faster than its own recording');
+      }
+    }
+  });
 }
