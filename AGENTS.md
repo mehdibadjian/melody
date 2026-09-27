@@ -40,6 +40,9 @@ A children's music-learning app (ages 6–10) specified via a PRD
   (`planning_artifacts` → `docs/planning`, `implementation_artifacts` →
   `docs/stories`, `project_knowledge` → `AGENTS.md`).
 - `docs/` — planning and implementation artifacts:
+  - `docs/wiki/` — codebase wiki (`Home.md` + Architecture, Acoustic coaching
+    pipeline, Content/gamification/analytics, CI-release-and-build). Keep it in
+    sync when architecture, tuning constants, or the release chain change.
   - `docs/planning/prd.md` — the PRD (source of truth for §refs).
   - `docs/implementation/implementation-plan.md` — v1 core + Epic 2 acoustic plan.
   - `docs/stories/sprint-status.yaml` — the tracking ledger (`epic-N/slug` keys,
