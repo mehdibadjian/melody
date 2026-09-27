@@ -7,6 +7,7 @@ import 'package:melody_app/domain/piano/piano_layout.dart';
 import 'package:melody_app/providers.dart';
 import 'package:melody_app/theme/tama_theme.dart';
 import 'package:melody_app/widgets/illustrated_keyboard.dart';
+import 'package:melody_app/widgets/song_demo_dialog.dart';
 
 /// Acoustic practice screen — the real-keyboard coaching experience.
 ///
@@ -124,6 +125,23 @@ class _AcousticPracticeScreenState
     setState(() {});
   }
 
+  /// Plays the arrangement so the child can hear it before (or between) takes.
+  ///
+  /// The mic has to go quiet first: the demo sounds the piano through the
+  /// phone's own speaker, and SongCoach would hear those notes and advance the
+  /// target on its own — the child would come back to a song half-played by
+  /// nobody. Whatever they were doing before is restored afterwards, so a
+  /// listen in the middle of a run does not cost them their place.
+  Future<void> _hearIt() async {
+    final wasListening = _controller.listening;
+    if (wasListening) await _controller.stopListening();
+    if (!mounted) return;
+    setState(() {});
+    await SongDemoDialog.show(context, widget.level);
+    if (!mounted || !wasListening) return;
+    await _start();
+  }
+
   @override
   Widget build(BuildContext context) {
     final snap = _controller.snapshot;
@@ -163,7 +181,20 @@ class _AcousticPracticeScreenState
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.level.name)),
+      appBar: AppBar(
+        title: Text(widget.level.name),
+        // In the app bar rather than the body because on this screen the body
+        // is the coaching readout and the keys, and a button between them
+        // would either sit on the target note or crowd the board.
+        actions: [
+          IconButton(
+            key: const Key('hear-it'),
+            tooltip: 'Hear it first',
+            onPressed: _hearIt,
+            icon: const Icon(Icons.headphones),
+          ),
+        ],
+      ),
       body: SafeArea(
         // In landscape the phone is already short, so stacking a text panel on
         // top of a keyboard leaves both unreadable. The coaching readout and the

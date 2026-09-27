@@ -5,14 +5,16 @@ import 'package:melody_app/domain/gamification/player_progress.dart';
 import 'package:melody_app/providers.dart';
 import 'package:melody_app/theme/tama_theme.dart';
 import 'package:melody_app/widgets/lesson_quest_tile.dart';
-import 'package:melody_app/widgets/song_demo_dialog.dart';
 import 'acoustic_practice_screen.dart';
 import 'level_play_screen.dart';
 
-/// How the child wants to play a lesson: hear the arrangement first (the demo),
-/// play on their own electric piano (the app listens through the mic and
-/// coaches), or play on the on-screen keyboard.
-enum PlayMode { demo, realKeyboard, onScreen }
+/// How the child wants to play a lesson: on their own electric piano (the app
+/// listens through the mic and coaches) or on the on-screen keyboard.
+///
+/// Hearing the tune is deliberately not a third mode here. It is something a
+/// child wants *after* they have picked how they are playing, next to the keys
+/// they are about to use, so both play screens carry a Hear it button.
+enum PlayMode { realKeyboard, onScreen }
 
 class AdventureMapScreen extends ConsumerWidget {
   const AdventureMapScreen({super.key});
@@ -122,15 +124,6 @@ class AdventureMapScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                 ],
                 ListTile(
-                  key: const Key('play-mode-demo'),
-                  leading: const Icon(Icons.headphones, size: 32),
-                  title: const Text('Hear it first'),
-                  subtitle: const Text(
-                      'Listen to the tune and feel the beat before you play'),
-                  onTap: () => Navigator.of(sheetContext).pop(_LevelAndMode(
-                      lesson.levels[selectedIndex], PlayMode.demo)),
-                ),
-                ListTile(
                   key: const Key('play-mode-real-keyboard'),
                   leading: const Icon(Icons.piano, size: 32),
                   title: const Text('My real keyboard'),
@@ -156,21 +149,14 @@ class AdventureMapScreen extends ConsumerWidget {
     );
 
     if (chosen == null || !context.mounted) return;
-    // A statement switch rather than an expression one, because the demo is a
-    // dialog and not a route: it is a look at the tune, not a place to be.
-    // Pushing it would stack a page the child has to back out of to reach the
-    // play modes they were just looking at. Exhaustiveness is kept on purpose,
-    // so a fourth mode fails the build instead of silently doing nothing.
-    switch (chosen.mode) {
-      case PlayMode.demo:
-        await SongDemoDialog.show(context, chosen.level);
-      case PlayMode.realKeyboard:
-        await Navigator.of(context).push(MaterialPageRoute<void>(
-            builder: (_) => AcousticPracticeScreen(level: chosen.level)));
-      case PlayMode.onScreen:
-        await Navigator.of(context).push(MaterialPageRoute<void>(
-            builder: (_) => LevelPlayScreen(level: chosen.level)));
-    }
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => switch (chosen.mode) {
+          PlayMode.realKeyboard => AcousticPracticeScreen(level: chosen.level),
+          PlayMode.onScreen => LevelPlayScreen(level: chosen.level),
+        },
+      ),
+    );
   }
 
   /// The arrangement to preselect: the first one not yet cleared, so a

@@ -7,6 +7,7 @@ import 'package:melody_app/providers.dart';
 import 'package:melody_app/screens/acoustic_practice_screen.dart';
 import 'package:melody_app/domain/piano/piano_layout.dart';
 import 'package:melody_app/widgets/illustrated_keyboard.dart';
+import 'package:melody_app/widgets/song_demo_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../support/fake_mic.dart';
@@ -33,17 +34,26 @@ void main() {
 
   /// Builds the screen over a fake mic. [harness] additionally hands back the
   /// container: the acoustic screen has no stars HUD, so a test that needs to
-  /// prove a child was *paid* has to read the committed progress state.
-  Future<({ProviderContainer container, Widget widget})> harness(
-      FakeMicCapture fake) async {
+  /// prove a child was *paid* has to read the committed progress state. It also
+  /// hands back the audio engine, so a test can prove the Hear it demo actually
+  /// sounded notes from this screen.
+  Future<
+      ({
+        ProviderContainer container,
+        SynthAudioEngine engine,
+        Widget widget
+      })> harness(FakeMicCapture fake) async {
     final prefs = await SharedPreferences.getInstance();
+    final engine = SynthAudioEngine();
+    await engine.initialize();
     final container = ProviderContainer(overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
-      audioEngineProvider.overrideWith((ref) => SynthAudioEngine()),
+      audioEngineProvider.overrideWith((ref) => engine),
       micCaptureProvider.overrideWithValue(fake),
     ]);
     return (
       container: container,
+      engine: engine,
       widget: UncontrolledProviderScope(
         container: container,
         child: const MaterialApp(home: AcousticPracticeScreen(level: song)),
@@ -192,6 +202,96 @@ void main() {
 
     // 1 of 7 notes done.
     expect(find.textContaining('1 / 7'), findsOneWidget);
+  });
+
+  group('Hear it', () {
+    testWidgets('the demo plays this screen\'s own arrangement',
+        (tester) async {
+      final h = await harness(mic);
+      addTearDown(h.container.dispose);
+      await tester.pumpWidget(h.widget);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('hear-it')));
+      await tester.pumpAndSettle();
+      expect(find.byType(SongDemoDialog), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('demo-play')));
+      // A bar of count-in comes first: at 84 in 4/4 that is 2857ms of clicks
+      // before note 0, so pumping 3s lands exactly on the first melody note.
+      await tester.pump(const Duration(milliseconds: 3000));
+      expect(h.engine.lastPlayedNote, 'E4',
+          reason: 'the demo must sound the level this screen is teaching');
+
+      await tester.tap(find.byKey(const Key('demo-close')));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('listening stops for the demo and resumes after it',
+        (tester) async {
+      // The demo comes out of the phone's own speaker, which is aimed straight
+      // at the mic. Left listening, the coach would hear those notes as the
+      // child's and advance the target on its own, so a child who stopped to
+      // listen would come back to a song half-played by nobody.
+      final h = await harness(mic);
+      addTearDown(h.container.dispose);
+      await tester.pumpWidget(h.widget);
+      await tester.pumpAndSettle();
+      await startListening(tester);
+      expect(mic.stopped, isFalse);
+
+      // runAsync, because stopping capture awaits the PCM subscription's cancel
+      // and the fake mic's stream lives in the real zone: under fake pumps that
+      // future never completes, so `stopped` would stay false no matter what the
+      // screen did.
+      await tester.runAsync(() async {
+        await tester.tap(find.byKey(const Key('hear-it')));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      });
+      await tester.pumpAndSettle();
+      expect(mic.stopped, isTrue);
+      expect(find.byKey(const Key('listening-indicator')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('demo-close')));
+      await tester.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      });
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('listening-indicator')), findsOneWidget,
+          reason:
+              'a listen should not cost the child the session they were in');
+
+      // The pipeline really was rebuilt, not just flagged: a note heard now
+      // still advances the song. Also in runAsync, because the restarted
+      // capture subscribes in the real zone — the fake-pump `play` helper could
+      // not deliver PCM to it.
+      await tester.runAsync(() async {
+        mic.emit(pcmToneFor('E4'));
+        mic.emit(pcmSilenceFor(seconds: 0.15));
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+      });
+      await tester.pump();
+      expect(find.byKey(const Key('target-D4')), findsOneWidget);
+    });
+
+    testWidgets('a denied mic still gets the demo', (tester) async {
+      // The main reason a child cannot get the tune out of their own fingers is
+      // that the app is not allowed to hear them. Listening is unavailable on
+      // that path; hearing must not be.
+      mic.permission = false;
+      await tester.pumpWidget(await app(mic));
+      await tester.pumpAndSettle();
+      await startListening(tester);
+      expect(find.byKey(const Key('mic-permission-denied')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('hear-it')));
+      await tester.pumpAndSettle();
+      expect(find.byType(SongDemoDialog), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('demo-close')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('mic-permission-denied')), findsOneWidget);
+    });
   });
   group('orientation', () {
     // The widget-test surface is 800x600, which is already landscape; these
