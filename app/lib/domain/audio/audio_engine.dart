@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:audioplayers/audioplayers.dart';
+import 'package:melody_app/domain/piano/piano_layout.dart';
 
 abstract interface class AudioEngine {
   Future<void> initialize();
@@ -7,25 +10,31 @@ abstract interface class AudioEngine {
   bool get isInitialized;
 }
 
+/// The notes the app can sound, and their pitches.
+///
+/// This is derived from [KeyboardLayout.sixtyOne] — the same definition the
+/// illustrated keyboard draws and the content guards check — rather than being
+/// typed out note by note. A hand-written table and a hand-written asset
+/// folder drift by exactly one key at a time, silently, because
+/// [AssetAudioEngine.playNote] returns without a word for anything it has no
+/// entry for; the reported symptom of that drift is a piano with a dead key,
+/// not a crash. Deriving it means a key that exists on the board either has
+/// audio or fails a test.
 class NoteFrequency {
-  static const _frequencies = <String, double>{
-    'C4': 261.63,
-    'D4': 293.66,
-    'E4': 329.63,
-    'F4': 349.23,
-    'F#4': 369.99,
-    'G4': 392.00,
-    'A4': 440.00,
-    'B4': 493.88,
-    'C5': 523.25,
-    'D5': 587.33,
-    'E5': 659.25,
-    'F5': 698.46,
-    'G5': 783.99,
-    'A5': 880.00,
-    'B5': 987.77,
-    'D6': 1174.66,
+  static final Map<String, double> _frequencies = {
+    for (final note in KeyboardLayout.sixtyOne.notes)
+      note: _equalTempered(note),
   };
+
+  /// Equal-tempered frequency with A4 = 440 Hz, computed from the note's MIDI
+  /// number (see [midiFromNote], the repo's one note-name parser).
+  static double _equalTempered(String note) {
+    final midi = midiFromNote(note);
+    if (midi == null) {
+      throw StateError('$note is not a parseable note name');
+    }
+    return 440.0 * math.pow(2, (midi - 69) / 12).toDouble();
+  }
 
   static double? of(String note) => _frequencies[note];
 
