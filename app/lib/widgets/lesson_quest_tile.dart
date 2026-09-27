@@ -9,23 +9,25 @@ import 'package:melody_app/widgets/illustrated_keyboard.dart';
 
 /// A lesson rendered as a quest card on the adventure map.
 ///
-/// The map used to be a plain [ListTile] whose leading widget was a `music_note`
-/// icon for nine out of ten lessons: every song looked identical, so a child
-/// could not tell an easy tune from a boss battle, nor one they had already
-/// beaten from one they had not, without reading the small print. This card puts
-/// the same three facts into things that are readable at a glance:
+/// The map used to be a plain [ListTile] whose leading widget was the same
+/// `music_note` icon for **all eleven** shipped lessons (no boss levels exist
+/// yet, so the `local_fire_department` branch never fired either). Every song
+/// looked identical, so a child could not tell an easy tune from a hard one, or
+/// one they had beaten from one they had not, without reading the small print.
+/// This card puts those facts into things that read at a glance:
 ///
-///  * **Identity** — the badge colour and glyph come from the lesson's difficulty
-///    and genre, and the badge carries the song's own first key as a coloured
-///    note so two lessons never read as the same token.
-///  * **Progress** — a ring around the badge fills with the share of the
-///    lesson's levels the child has cleared, and the levels they own light up as
-///    pips below the title.
+///  * **Identity** — the card draws the song's own opening phrase as a coloured
+///    contour ribbon (see `_MelodyRibbon`), so two lessons cannot render the
+///    same card. Difficulty tint plus a first-note badge looked promising but
+///    collapsed: four beginner songs share C4 and 4★/6♫, so they were
+///    pixel-identical.
+///  * **Progress** — a ring around the badge fills with the share of levels
+///    cleared, and the levels light up as pips.
 ///  * **Stakes** — the reward is shown as stars and notes before the tap, not
-///    only after, which is what makes a boss battle look worth attempting.
+///    only after.
 ///
-/// It stays a single tap target and keeps the `ListTile` keys the tests and
-/// screen readers already rely on.
+/// It stays a single tap target and routes through the same play-mode sheet, so
+/// navigation is unchanged.
 class LessonQuestTile extends StatelessWidget {
   const LessonQuestTile({
     super.key,
@@ -160,6 +162,8 @@ class LessonQuestTile extends StatelessWidget {
                       progress: progress,
                       tint: tint,
                     ),
+                    const SizedBox(height: 6),
+                    _MelodyRibbon(lesson: lesson),
                   ],
                 ),
               ),
@@ -334,6 +338,103 @@ class _QuestBadge extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The song's opening phrase drawn as a pitch contour.
+///
+/// This is what makes two cards differ. A first attempt at "gamify the icons"
+/// keyed the badge on difficulty tint plus the song's first note, and I checked
+/// it against the shipped content rather than trusting it: four beginner songs
+/// start on C4 and pay 4★/6♫, two start on E4 and pay 3★/5♫, so six of eleven
+/// cards would have rendered pixel-identically — the same complaint the issue
+/// was filed about. Every lesson here has a distinct note *sequence*, so the
+/// sequence itself is the honest identity signal.
+///
+/// Each bar's height is the note's pitch relative to the phrase, and its colour
+/// is that note's pitch class via [IllustratedKeyboard.colorForNote], so the
+/// ribbon teaches the same colour code the practice keyboard uses. Only the
+/// first [_maxNotes] are drawn; the row scrolls and a long phrase adds nothing a
+/// short one does not.
+class _MelodyRibbon extends StatelessWidget {
+  const _MelodyRibbon({required this.lesson});
+
+  final Lesson lesson;
+
+  static const int _maxNotes = 12;
+
+  /// Pitch of the first [_maxNotes] parseable notes, or empty when the lesson
+  /// has none (the content validator rejects that, so it is a render-time
+  /// guard rather than a supported state).
+  List<int> get pitches {
+    final out = <int>[];
+    for (final level in lesson.levels) {
+      for (final note in level.requiredNotes) {
+        final midi = midiFromNote(note);
+        if (midi == null) continue;
+        out.add(midi);
+        if (out.length == _maxNotes) return out;
+      }
+    }
+    return out;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final notes = pitches;
+    if (notes.isEmpty) return const SizedBox(height: 18);
+    return SizedBox(
+      height: 18,
+      // Semantics name the phrase, so a screen-reader child gets "Melody of
+      // Twinkle Twinkle Little Star" instead of an unlabeled strip of bars.
+      child: LayoutBuilder(
+        // CustomPaint takes its size from `size`, so the width has to come from
+        // the incoming constraints; Size(double.infinity, 18) is unbounded.
+        builder: (context, constraints) => Semantics(
+          label: 'Melody of ${lesson.songTitle}',
+          child: CustomPaint(
+            key: Key('melody-ribbon-${lesson.id}'),
+            size: Size(constraints.maxWidth, 18),
+            painter: _RibbonPainter(notes: notes),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RibbonPainter extends CustomPainter {
+  const _RibbonPainter({required this.notes});
+
+  final List<int> notes;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (notes.isEmpty) return;
+    final low = notes.reduce(math.min);
+    final high = notes.reduce(math.max);
+    // A phrase on one repeated note has no contour; give the range a floor so
+    // the bars spread instead of collapsing onto a single baseline.
+    final range = math.max(high - low, 1);
+    final slot = size.width / notes.length;
+    final barWidth = math.min(math.max(slot * 0.55, 2.0), size.width);
+    final minBar = size.height * 0.22;
+    for (var i = 0; i < notes.length; i++) {
+      final note = notes[i];
+      final t = (note - low) / range;
+      final height = minBar + (size.height - minBar) * t;
+      final left = i * slot + (slot - barWidth) / 2;
+      final rect = Rect.fromLTWH(left, size.height - height, barWidth, height);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, Radius.circular(barWidth / 2)),
+        // Same pitch-class colour the practice keyboard uses, so the ribbon
+        // teaches the code rather than inventing a second one.
+        Paint()..color = IllustratedKeyboard.colorForPitchClass(note),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RibbonPainter old) => old.notes.join() != notes.join();
 }
 
 /// One dot per level, filled when cleared; a boss level gets a diamond.

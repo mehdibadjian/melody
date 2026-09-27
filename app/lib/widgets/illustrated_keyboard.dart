@@ -71,8 +71,16 @@ class IllustratedKeyboard extends StatelessWidget {
   static Color colorForNote(String note) {
     final midi = midiFromNote(note);
     if (midi == null) return TamaColors.ink;
-    return _pitchClassColors[((midi % 12) + 12) % 12];
+    return colorForPitchClass(midi);
   }
+
+  /// The colour for the pitch class of [midi].
+  ///
+  /// Exposed so another widget can colour a raw MIDI number without restating
+  /// the table (and drifting from it) — the adventure map's melody ribbon does
+  /// exactly that.
+  static Color colorForPitchClass(int midi) =>
+      _pitchClassColors[((midi % 12) + 12) % 12];
 
   @override
   Widget build(BuildContext context) {
