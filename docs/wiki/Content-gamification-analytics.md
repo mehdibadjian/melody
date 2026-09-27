@@ -54,32 +54,46 @@ Derived, never authored: `Level.noteRange`
 ignoring unparseable entries, so the illustrated keyboard can centre its window
 on the song's real span.
 
-### The shipped library (as of v1.6.3)
+### The shipped library (as of v1.7.1 + GOLDEN)
 
-11 lessons, 11 levels — one level per song today — across 6 genres
-(nursery, folk, classical, hymn, spiritual, holiday). Difficulty: 8 beginner,
-2 intermediate, 1 advanced. Songs run 6–15 notes, 80–100 bpm, thresholds
-0.70–0.80, payouts 3★+5n to 8★+12n.
+12 lessons, 14 levels — all single-level except *GOLDEN*, which ships three
+arrangements — across 7 genres (nursery, folk, classical, hymn, spiritual,
+holiday, pop). Difficulty: 9 beginner, 2 intermediate, 1 advanced. Levels run
+6–85 notes, 80–120 bpm, thresholds 0.70–0.80, payouts 3★+5n to 8★+12n.
 
 `shipped_song_library_test.dart` is the real content gate. It asserts ≥ 8 songs,
 unique ids, ≥ 4 genres, **every note is a real key on the 61-key board**, and
-every note has a bundled WAV.
+every note has a bundled WAV. Length/threshold checks run over **every** level,
+not just the first; the 18-semitone span cap applies to `levels.first` only,
+because that is the arrangement a fresh player is dropped into.
 
 ### What the content actually constrains
 
-- `boss_battle` is a valid, parsed type and the map renders a 🔥 icon for it —
-  but **0 boss levels ship**. The mechanic is schema, not gameplay, yet.
-  (`LessonQuestTile` also draws a bolt on the badge and a diamond pip for a boss
-  level; both are only exercised by tests until boss content ships.)
-- Audio covers naturals C4–B5 only (`assets/audio/notes/`, 14 WAVs). No sharps
-  or flats can be authored today: `AssetAudioEngine.playNote` silently returns
-  for anything outside `NoteFrequency._frequencies`, so an accidental would
-  produce a *silent* demo. The library test is what keeps authors honest.
+- `boss_battle` is a valid, parsed type and the map renders a 🔥 icon for it.
+  Exactly **one** boss level ships: *GOLDEN — Hard*. `LessonQuestTile` also draws
+  a bolt on the badge and a diamond pip for a boss level, so those affordances
+  are no longer test-only. Nothing gates on it — no unlock requirement, no
+  different reward path; it is presentation plus one analytics tag.
+- Audio is keyed to `NoteFrequency._frequencies`, currently 16 WAVs: naturals
+  C4–B5 plus `F#4` and `D6`, which *GOLDEN* needs. `AssetAudioEngine.playNote`
+  silently returns for anything outside that table, so a new accidental means
+  **both** a table entry and a file — and until `audio_engine_test.dart`'s
+  table↔bundle check was added, the two drifting apart would have surfaced as a
+  silent key rather than a failure.
+- Sharps are stored on disk with `s`, not `#` (`fs4.wav` for `F#4`), and
+  `NoteAsset` is the only place that spells it. See its doc comment: `#` is a
+  URL fragment delimiter and `playNote` swallows a failed source, so a `#` file
+  name risks a key that does nothing rather than one that errors.
 - The on-screen `PianoKeyboard` renders 7 white keys (C4–B4) on a phone and 14
-  (C4–B5) above 900 dp. Two shipped songs — *When the Saints* (C5) and *Amazing
-  Grace* (C5–E5) — therefore contain notes a phone-sized on-screen board cannot
-  display. Those songs are playable in acoustic mode, where the window slides
-  freely. Worth knowing before adding content in that register.
+  (C4–B5) above 900 dp — no black keys at any size. Songs that need a sharp or a
+  note outside that octave are still valid content, but the tap path can only
+  step over the missing keys. `piano_keyboard_winnability_test.dart` pins the
+  exact per-board sets, and splits two failures that look similar:
+  **unwinnable** (a child cannot pass by tapping at all — *Amazing Grace* has
+  shipped this way since before the test existed, and so do *GOLDEN — Medium*
+  and *Hard* on a phone) versus **skips notes** (passable, but silently).
+  Those arrangements are meant for the acoustic path, where the guide window
+  slides over the full 61-key board.
 
 ## Gamification (`PlayerProgress`)
 
