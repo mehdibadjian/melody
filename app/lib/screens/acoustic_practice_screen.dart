@@ -65,17 +65,23 @@ class _AcousticPracticeScreenState
   }
 
   void _onSongComplete() {
-    final passed = _controller.snapshot.coach.accuracy >=
-            widget.level.successThreshold.minAccuracy &&
-        _controller.snapshot.coach.correctHits >=
-            widget.level.successThreshold.minNotesHit;
-    if (passed) {
-      _sessionProgress.applyLevelCompletion(
-        levelId: widget.level.id,
-        payout: widget.level.rewardPayout,
-        accuracy: _controller.snapshot.coach.accuracy,
-      );
-    }
+    // Reaching the end of a SongCoach run means every note was landed: the
+    // coach holds the child on a wrong note and never advances past it, so
+    // `correctHits == requiredNotes.length` whenever `isComplete` is true.
+    //
+    // This used to re-check the accuracy threshold here, which silently denied
+    // the payout to exactly the child the thresholds are meant to forgive. One
+    // fumble per note gives 7 hits / 14 attempts = 0.5 accuracy against a 0.7
+    // threshold: the screen showed "All done", the toast said "nice work", and
+    // no stars or currency were awarded. The threshold is not meaningless on
+    // this path — it simply cannot be failed *and* complete; the on-screen tap
+    // path is where a run can end below it, and that one still pays nothing.
+    final coach = _controller.snapshot.coach;
+    _sessionProgress.applyLevelCompletion(
+      levelId: widget.level.id,
+      payout: widget.level.rewardPayout,
+      accuracy: coach.accuracy,
+    );
     _sessionProgress.recordPracticeDay(DateTime.now().toUtc());
     ref
         .read(playerProgressProvider.notifier)
@@ -89,7 +95,7 @@ class _AcousticPracticeScreenState
   /// Non-blocking, auto-dismissing toast (mirrors LevelPlayScreen). The result
   /// is delivered as a toast so the child is never interrupted by a popup.
   void _showResultToast() {
-    final hits = _controller.snapshot.coach.correctHits;
+    final coach = _controller.snapshot.coach;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -97,7 +103,10 @@ class _AcousticPracticeScreenState
           key: const Key('result-toast'),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 3),
-          content: Text('You played it! $hits notes — nice work!'),
+          content: Text(
+            'You played it! ${coach.correctHits} notes • '
+            '${(coach.accuracy * 100).round()}% accurate',
+          ),
         ),
       );
   }
