@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.3](https://github.com/mehdibadjian/melody/compare/v1.6.2...v1.6.3) (2026-09-27)
+
+
+### Bug Fixes
+
+* **acoustic:** celebrate song completion with a toast, not a takeover ([#35](https://github.com/mehdibadjian/melody/issues/35)) ([c58f6c2](https://github.com/mehdibadjian/melody/commit/c58f6c2f250ec5078c76cd79cc54aa8e8b795ad5))
+
 ## [1.6.2](https://github.com/mehdibadjian/melody/compare/v1.6.1...v1.6.2) (2026-09-27)
 
 
