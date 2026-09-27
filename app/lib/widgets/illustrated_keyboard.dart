@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:melody_app/domain/piano/piano_layout.dart';
+import 'package:melody_app/theme/tama_theme.dart';
 
 /// Illustrates a slice of a real keyboard so the child can see *which physical
 /// key* to press while they play their actual electric piano and the app
@@ -92,7 +93,7 @@ class IllustratedKeyboard extends StatelessWidget {
                   left: _keyLeft(targetNote, whiteKeys, whiteWidth, blackWidth,
                       constraints.maxWidth),
                   isBlack: isBlackKeyMidi(midiFromNote(targetNote)!),
-                  color: const Color(0xFF00E676),
+                  color: TamaColors.emerald,
                   width: isBlackKeyMidi(midiFromNote(targetNote)!)
                       ? blackWidth
                       : whiteWidth,
@@ -114,7 +115,7 @@ class IllustratedKeyboard extends StatelessWidget {
                   left: _keyLeft(detectedNote!, whiteKeys, whiteWidth,
                       blackWidth, constraints.maxWidth),
                   isBlack: isBlackKeyMidi(midiFromNote(detectedNote!)!),
-                  color: Colors.deepOrange,
+                  color: TamaColors.orange,
                   width: isBlackKeyMidi(midiFromNote(detectedNote!)!)
                       ? blackWidth
                       : whiteWidth,
@@ -134,9 +135,10 @@ class IllustratedKeyboard extends StatelessWidget {
       key: Key('key-$note'),
       margin: const EdgeInsets.symmetric(horizontal: 1),
       decoration: BoxDecoration(
-        color: isTarget ? const Color(0xFF00E676) : Colors.white,
+        color: isTarget ? TamaColors.emerald : Colors.white,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
-        border: Border.all(color: isTarget ? Colors.green : base, width: 3),
+        border:
+            Border.all(color: isTarget ? TamaColors.emerald : base, width: 3),
       ),
       child: _tapTarget(
         note,
@@ -165,10 +167,10 @@ class IllustratedKeyboard extends StatelessWidget {
       width: width,
       height: keyHeight,
       decoration: BoxDecoration(
-        color: isTarget ? const Color(0xFF00E676) : const Color(0xFF212121),
+        color: isTarget ? TamaColors.emerald : const Color(0xFF212121),
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(6)),
-        border:
-            Border.all(color: isTarget ? Colors.green : Colors.black, width: 2),
+        border: Border.all(
+            color: isTarget ? TamaColors.emerald : Colors.black, width: 2),
       ),
       child: _tapTarget(
         note,

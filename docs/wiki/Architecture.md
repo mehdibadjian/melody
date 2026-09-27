@@ -37,8 +37,9 @@ that implements this interface. Nothing above it changes.
 ┌─ presentation ──────────────────────────────────────────────────────┐
 │ screens/  adventure_map · level_play · acoustic_practice            │
 │ widgets/  piano_keyboard (tappable) · illustrated_keyboard (picture) │
+│ theme/    tama_theme — the shared Tama palette + ThemeData          │
 ├─ composition ───────────────────────────────────────────────────────┤
-│ providers.dart   Riverpod providers        main.dart  app + theme   │
+│ providers.dart   Riverpod providers        main.dart  app bootstrap │
 ├─ application ───────────────────────────────────────────────────────┤
 │ session/    LevelSessionFlow  (drives one on-screen level run)      │
 │ coaching/   AcousticPracticeController (drives one listening run)   │

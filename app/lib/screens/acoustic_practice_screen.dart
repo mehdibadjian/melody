@@ -5,6 +5,7 @@ import 'package:melody_app/domain/content/content_models.dart';
 import 'package:melody_app/domain/gamification/player_progress.dart';
 import 'package:melody_app/domain/piano/piano_layout.dart';
 import 'package:melody_app/providers.dart';
+import 'package:melody_app/theme/tama_theme.dart';
 import 'package:melody_app/widgets/illustrated_keyboard.dart';
 
 /// Acoustic practice screen — the real-keyboard coaching experience.
@@ -213,7 +214,7 @@ class _CoachingPanel extends StatelessWidget {
           key: const Key('song-complete'),
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.check_circle, size: 40, color: Colors.green),
+            const Icon(Icons.check_circle, size: 40, color: TamaColors.emerald),
             const SizedBox(height: 8),
             Text('All done — tap a lesson to play again',
                 style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
@@ -232,7 +233,7 @@ class _CoachingPanel extends StatelessWidget {
             const Text('Play this note:', style: TextStyle(fontSize: 16)),
             Text(snap.targetNote ?? '',
                 style: theme.textTheme.displayLarge
-                    ?.copyWith(color: const Color(0xFF00C853))),
+                    ?.copyWith(color: TamaColors.purple)),
             const SizedBox(height: 12),
             Text(
               message,
@@ -241,7 +242,9 @@ class _CoachingPanel extends StatelessWidget {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: fb?.isCorrect == true ? Colors.green : Colors.deepOrange,
+                color: fb?.isCorrect == true
+                    ? TamaColors.emerald
+                    : TamaColors.orange,
               ),
             ),
           ],
@@ -260,7 +263,7 @@ class _ListeningIndicator extends StatelessWidget {
       key: Key('listening-indicator'),
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.graphic_eq, color: Colors.red, size: 28),
+        Icon(Icons.graphic_eq, color: TamaColors.rose, size: 28),
         SizedBox(width: 8),
         Text('Listening… play the highlighted key',
             style: TextStyle(fontSize: 16)),
@@ -283,7 +286,7 @@ class _PermissionDenied extends StatelessWidget {
         key: const Key('mic-permission-denied'),
         children: [
           const Text(
-            'Melody needs the microphone to hear you play. '
+            'Tama Melody needs the microphone to hear you play. '
             'Allow it, then tap below.',
             textAlign: TextAlign.center,
           ),

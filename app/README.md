@@ -1,6 +1,9 @@
-# melody_app
+# Tama Melody
 
-A new Flutter project.
+A children's piano-learning app, part of the Tama family. Built with Flutter.
+
+Brand colors and the app icon come from Tama-Tama — see
+[`docs/brand/README.md`](../docs/brand/README.md).
 
 ## Getting Started
 
