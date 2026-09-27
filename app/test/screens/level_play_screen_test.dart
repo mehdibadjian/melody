@@ -211,8 +211,11 @@ void main() {
       await tester.tap(find.byKey(const Key('key-C4')));
       await tester.pump();
       expect(find.text('1 / 3'), findsOneWidget);
-      // And replaying must not pay the level out a second time.
+      // And replaying must not pay the level out a second time. "Stars 3" alone
+      // cannot tell a completed replay from a dead one, so the card has to be
+      // back as well.
       await playNotes(tester, ['D4', 'E4']);
+      expect(find.text('You did it!'), findsOneWidget);
       expect(find.text('Stars 3'), findsOneWidget);
       await dismissToast(tester);
     });
