@@ -83,8 +83,7 @@ class Level {
     this.meter = SongMeter.simple,
     this.durations,
     this.songTempoBpm,
-  }) : assert(durations == null ||
-            durations.length == requiredNotes.length);
+  }) : assert(durations == null || durations.length == requiredNotes.length);
 
   final String id;
   final String name;

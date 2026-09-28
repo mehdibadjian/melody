@@ -226,10 +226,8 @@ void main() {
     });
 
     test('clicks keep the beat while a note is held across several beats', () {
-      final timeline = DemoTimeline.plan(_level(
-          notes: const ['C4', 'D4'],
-          bpm: 120,
-          durations: const [1, 4]));
+      final timeline = DemoTimeline.plan(
+          _level(notes: const ['C4', 'D4'], bpm: 120, durations: const [1, 4]));
       final clicks = timeline.events.where((e) => e.isClick).toList();
       // Four count-in beats, then one click per beat of the melody: D4 is held
       // for four base notes, so three clicks land while it is still ringing.
@@ -256,10 +254,8 @@ void main() {
     });
 
     test('the timeline covers a held final note and still rings out', () {
-      final timeline = DemoTimeline.plan(_level(
-          notes: const ['C4', 'D4'],
-          bpm: 120,
-          durations: const [1, 4]));
+      final timeline = DemoTimeline.plan(
+          _level(notes: const ['C4', 'D4'], bpm: 120, durations: const [1, 4]));
       // D4 ends at 2500 + 4*500 = 4500ms; the timeline gives it one more slot.
       expect(timeline.totalMs, 5000);
       expect(timeline.totalMs,

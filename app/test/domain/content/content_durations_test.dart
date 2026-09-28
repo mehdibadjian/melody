@@ -13,8 +13,11 @@ import 'package:test/test.dart';
 void main() {
   group('durations array', () {
     test('absent durations means every note is one base note long', () {
-      final level =
-          ContentParser.parseDocument(noDurationsJson).lessons.first.levels.single;
+      final level = ContentParser.parseDocument(noDurationsJson)
+          .lessons
+          .first
+          .levels
+          .single;
       expect(level.durations, isNull);
       for (var i = 0; i < level.requiredNotes.length; i++) {
         expect(level.durationNotesAt(i), 1.0);
@@ -45,11 +48,8 @@ void main() {
     test('durations are read against the base note, not the beat', () {
       // A compound meter splits each beat into three notes; a duration of 1
       // therefore means one *base note*, a third of a beat.
-      final level = ContentParser.parseDocument(compoundJson)
-          .lessons
-          .first
-          .levels
-          .single;
+      final level =
+          ContentParser.parseDocument(compoundJson).lessons.first.levels.single;
       expect(level.meter.notesPerBeat, 3);
       expect(level.durations, [1, 1, 1, 3]);
       expect(level.totalNoteUnits, 6.0);

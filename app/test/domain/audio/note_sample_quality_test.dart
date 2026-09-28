@@ -35,7 +35,8 @@ class _Wav {
 
   static _Wav read(String path) {
     final bytes = File(path).readAsBytesSync();
-    expect(bytes.sublist(0, 4), [0x52, 0x49, 0x46, 0x46], reason: '$path not RIFF');
+    expect(bytes.sublist(0, 4), [0x52, 0x49, 0x46, 0x46],
+        reason: '$path not RIFF');
     expect(String.fromCharCodes(bytes.sublist(8, 12)), 'WAVE');
 
     // Walk chunks: the data chunk is not always at the fixed offset 44.
@@ -46,12 +47,16 @@ class _Wav {
     var rate = 0;
     while (i + 8 <= bytes.length) {
       final id = String.fromCharCodes(bytes.sublist(i, i + 4));
-      final size = ByteData.sublistView(bytes, i + 4, i + 8).getUint32(0, Endian.little);
+      final size =
+          ByteData.sublistView(bytes, i + 4, i + 8).getUint32(0, Endian.little);
       final body = i + 8;
       if (id == 'fmt ') {
-        format = ByteData.sublistView(bytes, body, body + 2).getUint16(0, Endian.little);
-        channels = ByteData.sublistView(bytes, body + 2, body + 4).getUint16(0, Endian.little);
-        rate = ByteData.sublistView(bytes, body + 4, body + 8).getUint32(0, Endian.little);
+        format = ByteData.sublistView(bytes, body, body + 2)
+            .getUint16(0, Endian.little);
+        channels = ByteData.sublistView(bytes, body + 2, body + 4)
+            .getUint16(0, Endian.little);
+        rate = ByteData.sublistView(bytes, body + 4, body + 8)
+            .getUint32(0, Endian.little);
       } else if (id == 'data') {
         data = Uint8List.sublistView(bytes, body, body + size);
       }
@@ -64,7 +69,9 @@ class _Wav {
 
     final out = Float64List(pcm.length ~/ 2);
     for (var n = 0; n < out.length; n++) {
-      out[n] = ByteData.sublistView(pcm, n * 2, n * 2 + 2).getInt16(0, Endian.little) / 32768.0;
+      out[n] = ByteData.sublistView(pcm, n * 2, n * 2 + 2)
+              .getInt16(0, Endian.little) /
+          32768.0;
     }
     return _Wav(out, rate);
   }
@@ -87,7 +94,8 @@ double _magnitude(Float64List x, int sampleRate, double hz) {
 
 /// Energy at [hz] measured over a window starting [secondsFromStart], so the
 /// decay of one partial can be compared against another.
-double _energyAfter(Float64List x, int rate, double hz, double secondsFromStart) {
+double _energyAfter(
+    Float64List x, int rate, double hz, double secondsFromStart) {
   final start = (secondsFromStart * rate).floor().clamp(0, x.length - 1);
   final win = math.min(rate, x.length - start); // up to 1 s window
   return _magnitude(Float64List.sublistView(x, start, start + win), rate, hz);
@@ -96,7 +104,8 @@ double _energyAfter(Float64List x, int rate, double hz, double secondsFromStart)
 void main() {
   /// Loads a bundled sample by note name through [NoteAsset], so this test
   /// agrees with the engine about spelling rather than re-deriving it.
-  _Wav load(String note) => _Wav.read('assets/audio/notes/${NoteAsset.fileBaseFor(note)}.wav');
+  _Wav load(String note) =>
+      _Wav.read('assets/audio/notes/${NoteAsset.fileBaseFor(note)}.wav');
 
   group('bundled samples are piano-like, not two-partial tones', () {
     test('every key is PCM mono 16-bit at the capture rate', () {
@@ -117,13 +126,15 @@ void main() {
         final w = load(note);
         var best = 0.0;
         for (final candidate in NoteFrequency.playableNotes) {
-          final m = _magnitude(w.samples, w.sampleRate, NoteFrequency.of(candidate)!);
+          final m =
+              _magnitude(w.samples, w.sampleRate, NoteFrequency.of(candidate)!);
           if (m > best) best = m;
         }
         final atExpected = _magnitude(w.samples, w.sampleRate, expected);
         expect(atExpected, greaterThan(best * 0.97),
             reason: '$note does not carry its own fundamental most strongly');
-        expect(atExpected, greaterThan(0), reason: '$note is silent at $expected Hz');
+        expect(atExpected, greaterThan(0),
+            reason: '$note is silent at $expected Hz');
       }
     });
 
@@ -150,7 +161,8 @@ void main() {
         final w = load(note);
         final h1 = _magnitude(w.samples, w.sampleRate, f0);
         final h2 = _magnitude(w.samples, w.sampleRate, f0 * 2);
-        expect(h1, greaterThan(h2), reason: '$note should peak at its fundamental');
+        expect(h1, greaterThan(h2),
+            reason: '$note should peak at its fundamental');
       }
     });
 
@@ -167,11 +179,14 @@ void main() {
           }
           return math.sqrt(s / (to - from));
         }
+
         final head = rms(0, math.min(x.length, w.sampleRate ~/ 40));
-        final tail = rms(x.length - math.min(x.length, w.sampleRate ~/ 10), x.length);
+        final tail =
+            rms(x.length - math.min(x.length, w.sampleRate ~/ 10), x.length);
         expect(head, greaterThan(0.02), reason: '$note has no attack');
         expect(tail, lessThan(head), reason: '$note does not decay');
-        expect(tail, lessThan(0.02), reason: '$note ends loud instead of ringing out');
+        expect(tail, lessThan(0.02),
+            reason: '$note ends loud instead of ringing out');
       }
     });
 
@@ -212,7 +227,8 @@ void main() {
         expect(earlyH4, greaterThan(0), reason: '$note has no fourth harmonic');
         final ratioH1 = lateH1 / earlyH1;
         final ratioH4 = lateH4 / earlyH4;
-        expect(ratioH1, lessThan(1.0), reason: '$note fundamental does not decay');
+        expect(ratioH1, lessThan(1.0),
+            reason: '$note fundamental does not decay');
         expect(ratioH4, lessThanOrEqualTo(ratioH1 * 1.05),
             reason: '$note: H4 should not outlast the fundamental');
       }

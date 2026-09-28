@@ -31,14 +31,15 @@ void main() {
   /// taken well past the hammer transient, which is broadband by design and
   /// would be the one place a false detection is legitimate.
   List<double> sustainedFrame(String note) {
-    final bytes =
-        File('assets/audio/notes/${NoteAsset.fileBaseFor(note)}.wav').readAsBytesSync();
+    final bytes = File('assets/audio/notes/${NoteAsset.fileBaseFor(note)}.wav')
+        .readAsBytesSync();
     // Locate the data chunk rather than assuming offset 44.
     var i = 12;
     Uint8List? pcm;
     while (i + 8 <= bytes.length) {
       final id = String.fromCharCodes(bytes.sublist(i, i + 4));
-      final size = ByteData.sublistView(bytes, i + 4, i + 8).getUint32(0, Endian.little);
+      final size =
+          ByteData.sublistView(bytes, i + 4, i + 8).getUint32(0, Endian.little);
       final body = i + 8;
       if (id == 'data') pcm = Uint8List.sublistView(bytes, body, body + size);
       i = body + size + (size.isOdd ? 1 : 0);
@@ -49,9 +50,10 @@ void main() {
     final start = math.min(total - 2048, total ~/ 4);
     final frame = List<double>.filled(2048, 0);
     for (var n = 0; n < 2048; n++) {
-      frame[n] = ByteData.sublistView(data, (start + n) * 2, (start + n) * 2 + 2)
-              .getInt16(0, Endian.little) /
-          32768.0;
+      frame[n] =
+          ByteData.sublistView(data, (start + n) * 2, (start + n) * 2 + 2)
+                  .getInt16(0, Endian.little) /
+              32768.0;
     }
     return frame;
   }
@@ -63,7 +65,8 @@ void main() {
       // (D6, 1174.7 Hz) is what the detector was built to cover.
       final detector = PitchDetector();
       final inBand = NoteFrequency.playableNotes
-          .where((n) => NoteFrequency.of(n)! >= 85 && NoteFrequency.of(n)! <= 1150)
+          .where(
+              (n) => NoteFrequency.of(n)! >= 85 && NoteFrequency.of(n)! <= 1150)
           .toList();
       expect(inBand, isNotEmpty, reason: 'sanity: the band covers real keys');
 
@@ -72,7 +75,8 @@ void main() {
       for (final note in inBand) {
         final est = detector.detect(sustainedFrame(note));
         if (est == null) {
-          missed.add('$note (silent, expected ${NoteFrequency.of(note)!.round()} Hz)');
+          missed.add(
+              '$note (silent, expected ${NoteFrequency.of(note)!.round()} Hz)');
           continue;
         }
         final heard = noteFromFrequency(est.frequencyHz)?.note;
@@ -92,7 +96,16 @@ void main() {
       // on the keys with the most upper partials — the mid and upper treble,
       // where the synthesis model stacks three detuned strings.
       final detector = PitchDetector();
-      for (final note in const ['C4', 'E4', 'A4', 'C5', 'E5', 'A5', 'C6', 'F#4']) {
+      for (final note in const [
+        'C4',
+        'E4',
+        'A4',
+        'C5',
+        'E5',
+        'A5',
+        'C6',
+        'F#4'
+      ]) {
         final est = detector.detect(sustainedFrame(note));
         expect(est, isNotNull, reason: '$note produced no detection');
         final expected = NoteFrequency.of(note)!;
@@ -101,11 +114,13 @@ void main() {
             reason: '$note detected an octave or more too low (ratio '
                 '${ratio.toStringAsFixed(2)})');
         expect(ratio, greaterThan(0.83),
-            reason: '$note detected too high (ratio ${ratio.toStringAsFixed(2)})');
+            reason:
+                '$note detected too high (ratio ${ratio.toStringAsFixed(2)})');
       }
     });
 
-    test('detections land within a few cents, so coaching hints stay honest', () {
+    test('detections land within a few cents, so coaching hints stay honest',
+        () {
       // coach() turns (detected, target) into "move a few keys lower". A sample
       // that detects 30 cents off would make the app tell a child to move when
       // they are already right.
@@ -141,7 +156,8 @@ void main() {
       expect(weak, isEmpty, reason: 'samples below the clarity gate');
     });
 
-    test('the detector band stops below the top of the board, and that is stated',
+    test(
+        'the detector band stops below the top of the board, and that is stated',
         () {
       // Pins the documented limit rather than pretending the whole board is
       // audible in acoustic mode: C7 (2093 Hz) is above maxFrequencyHz (1200).

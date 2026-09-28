@@ -186,7 +186,8 @@ void main() {
         reason: 'only ${authored.length} levels carry an authored rhythm');
   });
 
-  test('an authored rhythm actually holds notes, rather than restating 1,1,1', () {
+  test('an authored rhythm actually holds notes, rather than restating 1,1,1',
+      () {
     // A `durations` array of all ones is the same as none at all, and would
     // pass every length check while changing nothing a child can hear.
     for (final lesson in doc.lessons) {
@@ -194,7 +195,8 @@ void main() {
         final d = level.durations;
         if (d == null) continue;
         expect(d.any((v) => v != 1.0), isTrue,
-            reason: '${level.id} authors a flat rhythm; drop the field instead');
+            reason:
+                '${level.id} authors a flat rhythm; drop the field instead');
       }
     }
   });

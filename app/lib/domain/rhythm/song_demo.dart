@@ -168,7 +168,9 @@ class DemoTimeline {
       // internals.
       events.sort((a, b) {
         final byTime = a.atMs.compareTo(b.atMs);
-        return byTime != 0 ? byTime : (a.isClick ? 1 : -1).compareTo(b.isClick ? 1 : -1);
+        return byTime != 0
+            ? byTime
+            : (a.isClick ? 1 : -1).compareTo(b.isClick ? 1 : -1);
       });
     }
 
