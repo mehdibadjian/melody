@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.2](https://github.com/mehdibadjian/melody/compare/v1.9.1...v1.9.2) (2026-09-28)
+
+
+### Bug Fixes
+
+* **audio:** sustain held notes so they fill their slot, not silence ([#52](https://github.com/mehdibadjian/melody/issues/52)) ([9f1ff3e](https://github.com/mehdibadjian/melody/commit/9f1ff3e67dffd94d074bb4ff506d042b12a91e78))
+
 ## [1.9.1](https://github.com/mehdibadjian/melody/compare/v1.9.0...v1.9.1) (2026-09-28)
 
 
