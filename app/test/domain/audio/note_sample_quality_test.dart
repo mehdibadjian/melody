@@ -216,13 +216,21 @@ void main() {
       // The brightness of a hammer strike fades before the note does. This is
       // what distinguishes a piano envelope from a constant-amplitude tone, and
       // it is cheap to measure at two points in time.
+      //
+      // The "late" sample is a fraction of the file's own length, not a fixed
+      // number of seconds: the samples sustain for seconds on purpose (so a
+      // held demo note fills its slot), and 600 ms into a 3 s note is still
+      // mid-sustain. Half the file is late enough that the partials have
+      // audibly separated, while both still carry measurable energy.
       for (final note in const ['A4', 'C5']) {
         final f0 = NoteFrequency.of(note)!;
         final w = load(note);
+        final seconds = w.samples.length / w.sampleRate;
+        final late = seconds * 0.5;
         final earlyH1 = _energyAfter(w.samples, w.sampleRate, f0, 0.05);
-        final lateH1 = _energyAfter(w.samples, w.sampleRate, f0, 0.6);
+        final lateH1 = _energyAfter(w.samples, w.sampleRate, f0, late);
         final earlyH4 = _energyAfter(w.samples, w.sampleRate, f0 * 4, 0.05);
-        final lateH4 = _energyAfter(w.samples, w.sampleRate, f0 * 4, 0.6);
+        final lateH4 = _energyAfter(w.samples, w.sampleRate, f0 * 4, late);
         expect(earlyH1, greaterThan(0), reason: '$note fundamental at start');
         expect(earlyH4, greaterThan(0), reason: '$note has no fourth harmonic');
         final ratioH1 = lateH1 / earlyH1;
