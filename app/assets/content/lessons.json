@@ -14,6 +14,7 @@
           "name": "Whole song",
           "type": "standard",
           "requiredNotes": ["E4", "D4", "C4", "E4", "D4", "C4"],
+          "durations": [1, 1, 2, 1, 1, 2],
           "tempoBpm": 84,
           "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 4 },
           "rewardPayout": { "stars": 3, "noteCurrency": 5 }
@@ -33,6 +34,7 @@
           "name": "First verse",
           "type": "standard",
           "requiredNotes": ["E4", "D4", "C4", "D4", "E4", "E4", "E4"],
+          "durations": [1, 1, 1, 1, 1, 1, 2],
           "tempoBpm": 84,
           "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 5 },
           "rewardPayout": { "stars": 3, "noteCurrency": 5 }
@@ -52,6 +54,7 @@
           "name": "Whole song",
           "type": "standard",
           "requiredNotes": ["C4", "C4", "G4", "G4", "A4", "A4", "G4", "F4", "F4", "E4", "E4", "D4", "D4", "C4"],
+          "durations": [1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2],
           "tempoBpm": 84,
           "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 10 },
           "rewardPayout": { "stars": 4, "noteCurrency": 6 }
@@ -71,6 +74,7 @@
           "name": "First phrase",
           "type": "standard",
           "requiredNotes": ["C4", "C4", "C4", "D4", "E4", "D4", "C4", "E4", "D4", "D4", "C4"],
+          "durations": [1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 4],
           "tempoBpm": 80,
           "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 8 },
           "rewardPayout": { "stars": 4, "noteCurrency": 6 }
@@ -90,6 +94,7 @@
           "name": "First verse",
           "type": "standard",
           "requiredNotes": ["C4", "D4", "E4", "C4", "C4", "D4", "E4", "C4", "E4", "F4", "G4", "E4", "F4", "G4"],
+          "durations": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2],
           "tempoBpm": 88,
           "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 10 },
           "rewardPayout": { "stars": 4, "noteCurrency": 6 }
@@ -109,6 +114,7 @@
           "name": "Whole song",
           "type": "standard",
           "requiredNotes": ["C4", "C4", "C4", "D4", "E4", "E4", "D4", "E4", "F4", "G4", "G4", "F4", "E4", "D4", "C4"],
+          "durations": [1.5, 0.5, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 4],
           "tempoBpm": 88,
           "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 11 },
           "rewardPayout": { "stars": 4, "noteCurrency": 6 }
@@ -128,6 +134,7 @@
           "name": "First phrase",
           "type": "standard",
           "requiredNotes": ["G4", "A4", "G4", "F4", "E4", "F4", "G4"],
+          "durations": [1, 1, 1, 1, 1, 1, 2],
           "tempoBpm": 90,
           "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 5 },
           "rewardPayout": { "stars": 3, "noteCurrency": 5 }
@@ -147,6 +154,7 @@
           "name": "Chorus",
           "type": "standard",
           "requiredNotes": ["E4", "E4", "E4", "E4", "E4", "E4", "E4", "G4", "C4", "D4", "E4"],
+          "durations": [1, 1, 2, 1, 1, 2, 1, 1, 1.5, 0.5, 4],
           "tempoBpm": 100,
           "successThreshold": { "minAccuracy": 0.7, "minNotesHit": 8 },
           "rewardPayout": { "stars": 4, "noteCurrency": 6 }
@@ -166,6 +174,7 @@
           "name": "Main theme",
           "type": "standard",
           "requiredNotes": ["E4", "E4", "F4", "G4", "G4", "F4", "E4", "D4", "C4", "C4", "D4", "E4", "E4", "D4", "D4"],
+          "durations": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.5, 0.5, 1, 2],
           "tempoBpm": 96,
           "successThreshold": { "minAccuracy": 0.75, "minNotesHit": 11 },
           "rewardPayout": { "stars": 6, "noteCurrency": 9 }
@@ -185,6 +194,7 @@
           "name": "Opening phrase",
           "type": "standard",
           "requiredNotes": ["C4", "E4", "F4", "G4", "C5", "C5", "G4", "E4", "C4"],
+          "durations": [1, 1, 1, 1, 1.5, 0.5, 1, 1, 4],
           "tempoBpm": 100,
           "successThreshold": { "minAccuracy": 0.75, "minNotesHit": 7 },
           "rewardPayout": { "stars": 6, "noteCurrency": 9 }
@@ -204,6 +214,7 @@
           "name": "First line",
           "type": "standard",
           "requiredNotes": ["G4", "C5", "E5", "C5", "E5", "D5", "C5"],
+          "durations": [1, 2, 1, 1, 1, 2, 4],
           "tempoBpm": 80,
           "successThreshold": { "minAccuracy": 0.8, "minNotesHit": 5 },
           "rewardPayout": { "stars": 8, "noteCurrency": 12 }

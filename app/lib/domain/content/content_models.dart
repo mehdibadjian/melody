@@ -81,8 +81,10 @@ class Level {
     required this.successThreshold,
     required this.rewardPayout,
     this.meter = SongMeter.simple,
+    this.durations,
     this.songTempoBpm,
-  });
+  }) : assert(durations == null ||
+            durations.length == requiredNotes.length);
 
   final String id;
   final String name;
@@ -96,6 +98,41 @@ class Level {
   /// [requiredNotes] fit inside one click. Common time, one note per beat, when
   /// not authored — so a demo of a 4/4 tune is unchanged by this field existing.
   final SongMeter meter;
+
+  /// How long each note of [requiredNotes] lasts, in units of the meter's base
+  /// note value ([SongMeter.notesPerBeat] of them per beat). 1.0 is one base
+  /// note; 2.0 is a note held across two of them.
+  ///
+  /// Null means every note is one base note long, which is what every level
+  /// authored before this field existed is — so the whole public-domain library
+  /// keeps its exact current timing without a single JSON edit.
+  ///
+  /// This is the field that makes a demo sound like the tune it teaches. Without
+  /// it the melody is a march of equal-length notes: Twinkle's phrase-final G
+  /// held two beats, Ode to Joy's closing half note and Amazing Grace's long
+  /// "grace" are all unstatable, because [meter] can only move the grid, never
+  /// lengthen one note on it. Deliberately parallel to [requiredNotes] rather
+  /// than folded into it, and deliberately demo-only: [requiredNotes] is the
+  /// scoring contract (`LessonSession` walks it note by note), and a held note
+  /// is one note to hit, not two.
+  final List<double>? durations;
+
+  /// Duration of the note at [index] in [requiredNotes], in base-note units.
+  ///
+  /// 1.0 when [durations] is not authored, which is exactly the spacing
+  /// [SongMeter.noteMs] has always implied.
+  double durationNotesAt(int index) {
+    final authored = durations;
+    if (authored == null || index < 0 || index >= authored.length) return 1.0;
+    return authored[index];
+  }
+
+  /// Total length of the melody in base-note units.
+  double get totalNoteUnits {
+    final authored = durations;
+    if (authored == null) return requiredNotes.length.toDouble();
+    return authored.fold(0.0, (sum, d) => sum + d);
+  }
 
   /// The tempo of the real recording, counted in the same beat as [tempoBpm].
   ///
@@ -133,6 +170,12 @@ class Level {
         // Only written when it differs from 4/4-with-one-note-per-beat, so
         // round-tripping the public-domain tunes keeps their existing shape.
         if (meter != SongMeter.simple) 'meter': meter.toJson(),
+        // Only written when some note is held longer than one base note. An
+        // all-ones list is exactly what "absent" already means, so emitting it
+        // would add 85 numbers to GOLDEN's hardest arrangement and change
+        // nothing about how it plays.
+        if (durations != null && durations!.any((d) => d != 1.0))
+          'durations': durations,
         if (songTempoBpm != null) 'songTempoBpm': songTempoBpm,
         'successThreshold': successThreshold.toJson(),
         'rewardPayout': rewardPayout.toJson(),

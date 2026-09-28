@@ -28,6 +28,7 @@ state rather than a half-broken lesson.
       "name": "…",
       "type": "standard",              // standard | boss_battle
       "requiredNotes": ["C4","C4","G4","G4","A4","A4","G4"],
+      "durations": [1, 1, 1, 1, 1, 1, 2],  // optional: base notes per entry
       "tempoBpm": 84,                  // 40–240, must be an int
       "meter": {                       // optional, defaults to simple 4/4
         "beatsPerMeasure": 4, "beatUnit": 4,
@@ -50,6 +51,7 @@ Validation, exactly as implemented:
 | unique `id` per lesson and per level | `_firstDuplicate` scan |
 | `difficulty` / `type` from a fixed vocabulary | throws on typos |
 | `requiredNotes` non-empty, all non-empty strings | throws; note *pitch* is not validated here |
+| `durations` absent ⇒ one base note per note; else a list of numbers, one per `requiredNotes` entry, each in (0, 8] | throws on length mismatch, non-numeric, zero/negative, or > `ContentParser.maxNoteDurationNotes` |
 | `tempoBpm` int in 40–240 | throws |
 | `songTempoBpm` absent, or int in 40–240 | throws |
 | `meter` absent ⇒ simple 4/4; else a Map with int `beatsPerMeasure`/`beatUnit`/`notesPerBeat` in 1–16 and bool `dotted` | throws |
@@ -60,7 +62,28 @@ Validation, exactly as implemented:
 Derived, never authored: `Level.noteRange`
 (`content_models.dart`) computes the lowest/highest MIDI across `requiredNotes`,
 ignoring unparseable entries, so the illustrated keyboard can centre its window
-on the song's real span.
+on the song's real span. `Level.durationNotesAt(i)` and `Level.totalNoteUnits`
+read the rhythm, defaulting to one base note per note when `durations` is
+absent.
+
+### What `durations` is for
+
+`requiredNotes` says *which* keys a song uses; on its own it cannot say how long
+each is held, so the demo rendered every tune as a march of equal-length notes —
+the pitches of "Row Row Row Your Boat" with none of its dotted lilt. `durations`
+is an optional parallel array, one entry per note, in **base-note units** (the
+same unit `SongMeter.noteMs` measures, so `1.0` is one step of the demo grid and
+`4.0` a whole note in 4/4). `DemoTimeline.plan` walks a running offset instead of
+`i * noteMs`, so a held note pushes everything after it later, and the metronome
+clicks now sit on the beat grid rather than being attached to a note, which keeps
+them in time while a note rings across several beats.
+
+Scoring is untouched: `LessonSession` still walks `requiredNotes` and matches on
+pitch only. `durations` changes what the child *hears*, not what they are graded
+on. `toJson` omits the field when it is absent or all-ones, so documents
+round-trip unchanged. Eleven public-domain levels carry an authored rhythm;
+GOLDEN's three do not, because transcribing a copyrighted contemporary
+arrangement's rhythm is a rights decision, not something to guess at here.
 
 ### What `meter` is for
 
@@ -85,13 +108,19 @@ default, so documents round-trip unchanged.
 12 lessons, 14 levels — all single-level except *GOLDEN*, which ships three
 arrangements — across 7 genres (nursery, folk, classical, hymn, spiritual,
 holiday, pop). Difficulty: 9 beginner, 2 intermediate, 1 advanced. Levels run
-6–85 notes, 80–120 bpm, thresholds 0.70–0.80, payouts 3★+5n to 8★+12n.
+6–85 notes, 80–120 bpm, thresholds 0.70–0.80, payouts 3★+5n to 8★+12n. Eleven
+of the levels carry an authored `durations` rhythm; the three GOLDEN
+arrangements deliberately do not.
 
 `shipped_song_library_test.dart` is the real content gate. It asserts ≥ 8 songs,
 unique ids, ≥ 4 genres, **every note is a real key on the 61-key board**, and
 every note has a bundled WAV. Length/threshold checks run over **every** level,
 not just the first; the 18-semitone span cap applies to `levels.first` only,
-because that is the arrangement a fresh player is dropped into.
+because that is the arrangement a fresh player is dropped into. It also lints the
+authored rhythms: every level totals a whole number of beats (`golden-hard`
+grandfathered, named so the allowance cannot quietly grow), ≥ 10 non-GOLDEN
+levels carry a `durations` array, none of them is a flat all-ones list, and each
+ends on a held note.
 
 ### What the content actually constrains
 

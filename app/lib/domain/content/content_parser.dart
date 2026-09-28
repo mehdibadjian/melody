@@ -9,6 +9,16 @@ class ContentParser {
   static const supportedSchemaVersions = {1, 2};
   static const minTempoBpm = 40;
   static const maxTempoBpm = 240;
+
+  /// Upper bound on one note's `durations` entry, in base-note units.
+  ///
+  /// 8 is a whole note in 4/4, the longest value a single held note plausibly
+  /// takes in this library. It also bounds how far out one note can push the
+  /// demo's timer: at the slowest tempo (40 bpm, one base note per beat) a
+  /// whole note is 12 seconds, so a stray typo cannot schedule a multi-minute
+  /// timer that holds the isolate open.
+  static const maxNoteDurationNotes = 8.0;
+
   static const allowedDifficulties = {'beginner', 'intermediate', 'advanced'};
   static const allowedLevelTypes = {'standard', 'boss_battle'};
 
@@ -163,6 +173,13 @@ class ContentParser {
         'noteCurrency must be a non-negative int',
       );
     }
+    // Optional: per-note durations in base-note units, parallel to
+    // requiredNotes. Absent means "every note is one base note", which is what
+    // every level authored before this field existed is. Present-but-wrong
+    // throws rather than defaulting, because a half-typed duration list would
+    // silently desynchronize the melody from the meter — the exact failure the
+    // `meter` field was added to prevent.
+    final durations = _parseDurations(raw['durations'], requiredNotes.length);
     return Level(
       id: _requiredString(raw, 'id'),
       name: _requiredString(raw, 'name'),
@@ -170,11 +187,51 @@ class ContentParser {
       requiredNotes: requiredNotes.cast<String>(),
       tempoBpm: tempo,
       meter: _parseMeter(raw['meter']),
+      durations: durations,
       songTempoBpm: songTempo as int?,
       successThreshold: SuccessThreshold(
           minAccuracy: minAccuracy.toDouble(), minNotesHit: minNotesHit),
       rewardPayout: RewardPayout(stars: stars, noteCurrency: noteCurrency),
     );
+  }
+
+  /// Validates the optional `durations` array against [noteCount].
+  ///
+  /// Returns null when absent, meaning "one base note each". Rejects a length
+  /// mismatch, non-numeric entries, and anything that is not a positive
+  /// duration: a zero or negative entry would place two notes at the same
+  /// instant, and a huge one would schedule a timer minutes out for a single
+  /// held note.
+  static List<double>? _parseDurations(Object? raw, int noteCount) {
+    if (raw == null) return null;
+    if (raw is! List || raw.isEmpty) {
+      throw const ContentValidationException(
+        'durations must be a non-empty list when present',
+      );
+    }
+    if (raw.length != noteCount) {
+      throw ContentValidationException(
+        'durations must have one entry per note '
+        '(expected $noteCount, got ${raw.length})',
+      );
+    }
+    final out = <double>[];
+    for (final value in raw) {
+      if (value is! num) {
+        throw ContentValidationException(
+          'durations entries must be numbers, got $value',
+        );
+      }
+      final d = value.toDouble();
+      if (!d.isFinite || d <= 0 || d > maxNoteDurationNotes) {
+        throw ContentValidationException(
+          'durations entries must be between 0 (exclusive) and '
+          '$maxNoteDurationNotes base notes, got $d',
+        );
+      }
+      out.add(d);
+    }
+    return out;
   }
 
   /// Optional `meter` block: how `tempoBpm` is felt.

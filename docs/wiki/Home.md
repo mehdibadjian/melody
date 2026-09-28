@@ -48,12 +48,12 @@ adding a guitar or MIDI input means one new `InstrumentInput` impl — no rewrit
 
 | Area | Files | Lines | Notes |
 | --- | --- | --- | --- |
-| `app/lib/domain/` | 21 | 2,390 | Game logic in pure Dart — no Flutter or plugin imports |
+| `app/lib/domain/` | 23 | 3,034 | Game logic in pure Dart — no Flutter or plugin imports |
 | `app/lib/screens` + `widgets` | 6 | 1,934 | Flutter UI |
 | `app/lib/` (`main`, `providers`) | 2 | 130 | Composition root |
 | `app/lib/theme/` | 1 | 69 | Tama palette + `ThemeData` |
 | `app/lib/platform/` | 1 | 44 | The only device-specific code in the repo |
-| `app/test/` | 34 | 6,614 | Mirrors the `lib/` tree; tests are larger than the code |
+| `app/test/` | 35 | 6,976 | Mirrors the `lib/` tree; tests are larger than the code |
 | `app/assets/audio/notes/` | 61 WAVs | ~4.5 MB | One struck-string sample per key of the 61-key board (regenerate with `app/tools/generate_note_samples.py`) |
 
 Repo layout, myLoop submodule, and agent workflow live in

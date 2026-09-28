@@ -42,6 +42,7 @@ Level _level({
   required List<String> notes,
   int bpm = 120,
   SongMeter meter = SongMeter.simple,
+  List<double>? durations,
 }) =>
     Level(
       id: 't',
@@ -50,6 +51,7 @@ Level _level({
       requiredNotes: notes,
       tempoBpm: bpm,
       meter: meter,
+      durations: durations,
       successThreshold:
           const SuccessThreshold(minAccuracy: 0.7, minNotesHit: 1),
       rewardPayout: const RewardPayout(stars: 1, noteCurrency: 1),
@@ -196,6 +198,99 @@ void main() {
     test('a one-note level still plans without going negative', () {
       final timeline = DemoTimeline.plan(_level(notes: const ['C4'], bpm: 120));
       expect(timeline.totalMs, greaterThan(timeline.leadInMs));
+    });
+  });
+
+  group('DemoTimeline.plan with authored durations', () {
+    // 4/4 at 120 bpm: a beat (and a base note) is 500ms, the count-in is one
+    // 2000ms bar, so note 0 lands at 2000ms.
+    test('a held note pushes everything after it later', () {
+      final timeline = DemoTimeline.plan(_level(
+          notes: const ['C4', 'D4', 'E4'],
+          bpm: 120,
+          durations: const [1, 3, 1]));
+      final notes = timeline.events.where((e) => !e.isClick).toList();
+      expect(notes.map((e) => e.atMs), [2000, 2500, 4000]);
+      // D4 rings for three base notes, so E4 starts three slots later rather
+      // than one — that gap is the rhythm the child is meant to hear.
+      expect(notes[2].atMs - notes[1].atMs, 1500);
+    });
+
+    test('a dotted lilt spaces notes 1.5 and 0.5 slots apart', () {
+      final timeline = DemoTimeline.plan(_level(
+          notes: const ['C4', 'D4', 'E4'],
+          bpm: 120,
+          durations: const [1.5, 0.5, 2]));
+      final notes = timeline.events.where((e) => !e.isClick).toList();
+      expect(notes.map((e) => e.atMs), [2000, 2750, 3000]);
+    });
+
+    test('clicks keep the beat while a note is held across several beats', () {
+      final timeline = DemoTimeline.plan(_level(
+          notes: const ['C4', 'D4'],
+          bpm: 120,
+          durations: const [1, 4]));
+      final clicks = timeline.events.where((e) => e.isClick).toList();
+      // Four count-in beats, then one click per beat of the melody: D4 is held
+      // for four base notes, so three clicks land while it is still ringing.
+      expect(clicks.length, 4 + 5);
+      expect(clicks.map((e) => e.atMs),
+          [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]);
+      // The count-in still marks its downbeat, and the melody's beats keep
+      // cycling through the bar rather than freezing on the held note's beat.
+      expect(clicks[4].beatInMeasure, 0);
+      expect(clicks[5].beatInMeasure, 1);
+      expect(clicks[8].beatInMeasure, 4 % 4);
+    });
+
+    test('a note after a held one reports the beat it actually lands on', () {
+      final timeline = DemoTimeline.plan(_level(
+          notes: const ['C4', 'D4', 'E4', 'G4'],
+          bpm: 120,
+          durations: const [1, 4, 1, 2]));
+      final notes = timeline.events.where((e) => !e.isClick).toList();
+      // D4 is held across a whole bar, so E4 arrives on the second bar's
+      // second beat rather than where an index-derived beat would put it.
+      expect(notes.map((e) => e.atMs), [2000, 2500, 4500, 5000]);
+      expect(notes.map((e) => e.beatInMeasure), [0, 1, 1, 2]);
+    });
+
+    test('the timeline covers a held final note and still rings out', () {
+      final timeline = DemoTimeline.plan(_level(
+          notes: const ['C4', 'D4'],
+          bpm: 120,
+          durations: const [1, 4]));
+      // D4 ends at 2500 + 4*500 = 4500ms; the timeline gives it one more slot.
+      expect(timeline.totalMs, 5000);
+      expect(timeline.totalMs,
+          greaterThan(timeline.events.where((e) => !e.isClick).last.atMs));
+    });
+
+    test('durations divide a compound beat the same way the meter does', () {
+      final timeline = DemoTimeline.plan(_level(
+          notes: const ['C4', 'D4', 'E4'],
+          bpm: 120,
+          meter: _compound,
+          durations: const [3, 3, 6]));
+      // Three base notes to the dotted quarter: at 120 bpm a base note is
+      // 166.7ms, so holding for 3 is exactly one beat.
+      final notes = timeline.events.where((e) => !e.isClick).toList();
+      expect(notes[1].atMs - notes[0].atMs, closeTo(500, 1));
+      expect(notes[2].atMs - notes[1].atMs, closeTo(500, 1));
+    });
+
+    test('an unauthored level plans exactly as it did before durations existed',
+        () {
+      final plain = DemoTimeline.plan(
+          _level(notes: const ['C4', 'D4', 'E4', 'G4'], bpm: 120));
+      final explicit = DemoTimeline.plan(_level(
+          notes: const ['C4', 'D4', 'E4', 'G4'],
+          bpm: 120,
+          durations: const [1, 1, 1, 1]));
+      expect(explicit.totalMs, plain.totalMs);
+      expect(explicit.leadInMs, plain.leadInMs);
+      expect(explicit.events.map((e) => (e.atMs, e.noteIndex, e.isClick)),
+          plain.events.map((e) => (e.atMs, e.noteIndex, e.isClick)));
     });
   });
 
