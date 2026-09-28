@@ -81,7 +81,8 @@ device. Preserve this on every new file.
 | `lib/providers.dart` | The whole Riverpod container (eight providers, no codegen) |
 | `lib/platform/` | `MicCapture` device implementation (the `record` plugin) |
 | `assets/content/lessons.json` | Lesson content (schema v2) — add songs here, no code |
-| `assets/audio/notes/` | 61 WAVs, one per key of the 61-key board |
+| `assets/audio/notes/` | 61 WAVs, one per key of the 61-key board — struck-string samples (regenerate: `tools/generate_note_samples.py`) |
+| `tools/` | Deterministic asset generators (note samples) |
 | `test/` | Mirrors the `lib/` tree; larger than the code under test |
 
 ### Acoustic pipeline

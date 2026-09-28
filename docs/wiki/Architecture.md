@@ -142,6 +142,15 @@ degrade startup (that was the v1.5.2 fix).
   `assets/content/lessons.json` and fails CI if a song goes off the 61-key board
   or asks for a note with no bundled WAV. Content is authored by hand, so this
   is the content linter.
+- `test/domain/audio/note_sample_quality_test.dart` — decodes the bundled WAVs
+  and fails if they are not piano-like: no harmonics above the second, one fixed
+  envelope for every pitch, or no decay. The first 61 samples were two-partial
+  sine tones that were perfectly in tune and passed every test that existed, so
+  this measures the audio rather than trusting that a file is present.
+- `test/domain/acoustic/detector_on_bundled_samples_test.dart` — runs the real
+  `PitchDetector` over the real note samples, the only place those two meet. A
+  richer timbre can fool an NSDF detector into a sub-octave error even while
+  sounding better, so this pins detection, cents error, and clarity headroom.
 
 Known trap: broadcast streams deliver asynchronously, so a multi-touch test must
 `await Future.delayed(Duration.zero)` after `press()` before asserting.

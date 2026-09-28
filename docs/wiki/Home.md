@@ -53,8 +53,8 @@ adding a guitar or MIDI input means one new `InstrumentInput` impl — no rewrit
 | `app/lib/` (`main`, `providers`) | 2 | 130 | Composition root |
 | `app/lib/theme/` | 1 | 69 | Tama palette + `ThemeData` |
 | `app/lib/platform/` | 1 | 44 | The only device-specific code in the repo |
-| `app/test/` | 30 | 5,169 | Mirrors the `lib/` tree; tests are larger than the code |
-| `app/assets/audio/notes/` | 61 WAVs | ~1 MB | One sample per key of the 61-key board |
+| `app/test/` | 34 | 6,614 | Mirrors the `lib/` tree; tests are larger than the code |
+| `app/assets/audio/notes/` | 61 WAVs | ~4.5 MB | One struck-string sample per key of the 61-key board (regenerate with `app/tools/generate_note_samples.py`) |
 
 Repo layout, myLoop submodule, and agent workflow live in
 [`AGENTS.md`](../../AGENTS.md). Story-level history lives in
