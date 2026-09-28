@@ -28,12 +28,23 @@ class DemoEvent {
     required this.beatInMeasure,
   });
 
-  /// A melody note. [noteIndex] is its position in `Level.requiredNotes`.
+  /// A melody note. [noteIndex] is its position in `Level.requiredNotes`, and
+  /// [beatInMeasure] the beat it starts on, computed while planning.
+  ///
+  /// The beat cannot be derived from the index by the player: with authored
+  /// durations a held note spans several beats, so note 6 of a 4/4 tune is not
+  /// automatically on beat 2. Planning is the only place that knows the running
+  /// offset, so it writes the answer onto the event.
   const DemoEvent.note({
     required int atMs,
     required String note,
     required int noteIndex,
-  }) : this._(atMs: atMs, note: note, noteIndex: noteIndex, beatInMeasure: -1);
+    required int beatInMeasure,
+  }) : this._(
+            atMs: atMs,
+            note: note,
+            noteIndex: noteIndex,
+            beatInMeasure: beatInMeasure);
 
   /// A metronome click. [beatInMeasure] is 0-based, so 0 is the downbeat.
   const DemoEvent.click({required int atMs, required int beatInMeasure})
@@ -52,7 +63,7 @@ class DemoEvent {
   /// Index into the level's notes; -1 for a click.
   final int noteIndex;
 
-  /// Which beat of the bar this click lands on; -1 for a melody note.
+  /// Which beat of the bar this event lands on; 0 is the downbeat.
   final int beatInMeasure;
 
   bool get isClick => note == null;
@@ -123,23 +134,49 @@ class DemoTimeline {
     final leadInMs = meter.measureMs(bpm).round();
 
     final notes = level.requiredNotes;
+    // Walk a running offset instead of `i * noteMs`: with authored durations a
+    // note can be held across several base-note slots, so the position of note
+    // i is the sum of the durations before it, not a multiple of one spacing.
+    // Without authored durations every step is exactly noteMs and the timeline
+    // is bit-identical to what it always was.
+    var offsetNotes = 0.0; // running start position, in base-note units
     for (var i = 0; i < notes.length; i++) {
-      final atMs = (leadInMs + i * noteMs).round();
-      events.add(DemoEvent.note(atMs: atMs, note: notes[i], noteIndex: i));
-      if (!withClicks) continue;
+      final atMs = (leadInMs + offsetNotes * noteMs).round();
+      final beat = offsetNotes / meter.notesPerBeat;
+      events.add(DemoEvent.note(
+          atMs: atMs,
+          note: notes[i],
+          noteIndex: i,
+          beatInMeasure: beat.floor() % meter.beatsPerMeasure));
+      offsetNotes += level.durationNotesAt(i);
+    }
+    if (withClicks) {
       // Clicks run under the whole melody, not just the count-in: a child who
       // hears the pulse only before note 0 has been taught a tempo, not a
-      // rhythm. One click per beat, landing on that beat's first note.
-      if (i % meter.notesPerBeat == 0) {
+      // rhythm. They sit on the beat grid itself rather than being attached to
+      // a note, so they keep time while a held note rings across several beats.
+      final melodyBeats = offsetNotes / meter.notesPerBeat;
+      for (var beat = 0; beat < melodyBeats.ceil(); beat++) {
         events.add(DemoEvent.click(
-            atMs: atMs,
-            beatInMeasure: (i ~/ meter.notesPerBeat) % meter.beatsPerMeasure));
+            atMs: (leadInMs + beat * beatMs).round(),
+            beatInMeasure: beat % meter.beatsPerMeasure));
       }
+      // Chronological order, with a note kept ahead of a click at the same
+      // instant: List.sort is not stable, and the player suppresses a click
+      // that coincides with a note so the note's step survives. Tying the order
+      // down explicitly keeps that behaviour instead of depending on sort
+      // internals.
+      events.sort((a, b) {
+        final byTime = a.atMs.compareTo(b.atMs);
+        return byTime != 0
+            ? byTime
+            : (a.isClick ? 1 : -1).compareTo(b.isClick ? 1 : -1);
+      });
     }
 
-    // Ring the last note out instead of ending exactly on it.
-    final totalMs =
-        (leadInMs + (notes.length - 1) * noteMs + noteMs * 2).round();
+    // Ring the last note out instead of ending exactly on it: one full base-note
+    // spacing past its written end.
+    final totalMs = (leadInMs + (offsetNotes + 1) * noteMs).round();
     return DemoTimeline._(
       events: events,
       leadInMs: leadInMs,
@@ -251,9 +288,10 @@ class SongDemoPlayer {
           note: event.note,
           noteIndex: event.noteIndex,
           totalNotes: totalNotes,
-          beatInMeasure: event.isClick
-              ? event.beatInMeasure
-              : (event.noteIndex ~/ meter.notesPerBeat) % meter.beatsPerMeasure,
+          // Taken from the event, which planning computed from the running
+          // offset. Deriving it here from the note index would be wrong for a
+          // held note: note 6 is not on beat 2 once notes can span beats.
+          beatInMeasure: event.beatInMeasure,
           beatsPerMeasure: meter.beatsPerMeasure,
           countingIn: event.atMs < timeline.leadInMs,
         ));

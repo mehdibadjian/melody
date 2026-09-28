@@ -146,4 +146,74 @@ void main() {
       }
     }
   });
+
+  test('an authored rhythm totals whole beats, so the click grid stays in time',
+      () {
+    // A fractional beat count would leave the last click landing between the
+    // melody's end and the bar line, which is the one thing a metronome must
+    // never do.
+    //
+    // `golden-hard` is grandfathered: 85 notes at three to the beat is 28 1/3
+    // beats, and that predates authored durations — the level is a note-count
+    // challenge in the song's real 12/8 pulse, not a phrase that ends on a bar
+    // line. Named here so the allowance cannot quietly grow.
+    const grandfathered = {'golden-hard'};
+    for (final lesson in doc.lessons) {
+      for (final level in lesson.levels) {
+        if (grandfathered.contains(level.id)) continue;
+        final beats = level.totalNoteUnits / level.meter.notesPerBeat;
+        expect(beats, closeTo(beats.roundToDouble(), 1e-9),
+            reason: '${level.id} lasts $beats beats');
+      }
+    }
+  });
+
+  test('most of the library has an authored rhythm, not a march of equal notes',
+      () {
+    // The schema could always express durations; this pins that the public
+    // domain tunes actually use it. Without a rhythm every song demos as
+    // evenly spaced notes, which is why none of them sounded like the tune.
+    // GOLDEN is excluded on purpose: its rhythm belongs to whoever clears the
+    // rights, not to a guess written into the library.
+    final authored = <String>[];
+    for (final lesson in doc.lessons) {
+      if (lesson.id == 'song-golden') continue;
+      for (final level in lesson.levels) {
+        if (level.durations != null) authored.add(level.id);
+      }
+    }
+    expect(authored.length, greaterThanOrEqualTo(10),
+        reason: 'only ${authored.length} levels carry an authored rhythm');
+  });
+
+  test('an authored rhythm actually holds notes, rather than restating 1,1,1',
+      () {
+    // A `durations` array of all ones is the same as none at all, and would
+    // pass every length check while changing nothing a child can hear.
+    for (final lesson in doc.lessons) {
+      for (final level in lesson.levels) {
+        final d = level.durations;
+        if (d == null) continue;
+        expect(d.any((v) => v != 1.0), isTrue,
+            reason:
+                '${level.id} authors a flat rhythm; drop the field instead');
+      }
+    }
+  });
+
+  test('every public-domain tune ends on a held note, like the song does', () {
+    // The cadence is the single most recognisable part of a nursery rhyme or
+    // hymn: the last note is long. An arrangement that ends on a short note
+    // stops sounding finished, so this is checked per tune rather than left to
+    // the author's ear.
+    for (final lesson in doc.lessons) {
+      if (lesson.id == 'song-golden') continue;
+      for (final level in lesson.levels) {
+        final d = level.durations;
+        if (d == null) continue;
+        expect(d.last, greaterThan(1.0),
+            reason: '${level.id} ends on a short note');
+      }
+    }
+  });
 }
