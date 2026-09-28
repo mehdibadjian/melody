@@ -68,16 +68,45 @@ def sixty_one_notes():
     return out
 
 
+# Perceptual floor used to size each file: a note is "still ringing" until it
+# falls to this fraction of its own peak. -6.91/ln(FLOOR) converts a t60 (time
+# to drop 60 dB) into the time to drop to FLOOR: for 0.02 that factor is 0.565.
+AUDIBLE_FLOOR = 0.02
+_TO_FLOOR = math.log(1.0 / AUDIBLE_FLOOR) / 6.91
+
+
+def sustain_t60(midi: int) -> float:
+    """The fundamental's decay time constant.
+
+    This is a *sustained* piano (foot on the damper pedal), not a dry staccato
+    one. The reason matters: the demo engine is monophonic and strikes a note
+    exactly once, so a note with an authored duration of 2 or 4 can only fill
+    its slot if the sample itself keeps ringing that long. The first version of
+    this file decayed like an unpedalled piano — a C5 audible for ~0.5 s — so a
+    3 s held note in Amazing Grace went silent for two thirds of its own length,
+    and that dead air read as a pause between notes.
+
+    The curve is monotonic and pitched, not derived from the song list: bass
+    rings for several seconds, treble for about a second, and the clip bounds
+    keep every file a sane length regardless of which note a tune happens to
+    hold. Mid-register (C4–C5) is where the library actually holds notes for
+    three seconds, and that is exactly where a real piano sustains longest.
+    """
+    return float(np.clip(7.6 * 2 ** (-(midi - 60) / 15.0), 1.0, 6.2))
+
+
 def sample_duration(midi: int) -> float:
-    """How long the string should ring. Bass sustains, treble does not."""
-    return float(np.clip(1.85 * 2 ** (-(midi - 60) / 18.0), 0.55, 3.0))
+    """Seconds of audio to write: until the fundamental fades to the audible
+    floor, plus a short release so the file ends in silence rather than a click.
+    """
+    return sustain_t60(midi) * _TO_FLOOR + 0.14
 
 
 def synthesize(name: str) -> np.ndarray:
     midi = note_to_midi(name)
     f0 = midi_to_freq(midi)
-    dur = sample_duration(midi)
-    n = int(SR * dur)
+    t60 = sustain_t60(midi)
+    n = int(SR * sample_duration(midi))
     t = np.arange(n) / SR
 
     # Unison strings: a real piano uses 1 (bass), 2 (mid) or 3 (treble). Slight
@@ -114,9 +143,10 @@ def synthesize(name: str) -> np.ndarray:
         p = 1.12 + 0.004 * max(0, midi - 60)
         amp = (1.0 / h) ** p
         # Higher harmonics decay faster -- the brightness of the strike fades
-        # before the fundamental does.
-        t60 = dur / (1.0 + 0.38 * (h - 1))
-        env = np.exp(-t * (6.91 / t60))
+        # well before the fundamental does. The 0.5 factor is what makes the
+        # note darken as it sustains, and the quality test measures it.
+        partial_t60 = t60 / (1.0 + 0.5 * (h - 1))
+        env = np.exp(-t * (6.91 / partial_t60))
         partial = np.zeros(n)
         for cents in detunes:
             ratio = 2 ** (cents / 12.0)

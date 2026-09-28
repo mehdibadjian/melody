@@ -147,6 +147,12 @@ degrade startup (that was the v1.5.2 fix).
   envelope for every pitch, or no decay. The first 61 samples were two-partial
   sine tones that were perfectly in tune and passed every test that existed, so
   this measures the audio rather than trusting that a file is present.
+- `test/domain/audio/sustain_fills_held_slots_test.dart` — ties the authored
+  `durations` to the sample decay. The demo engine is monophonic and never
+  re-triggers a held note, so a note written to last four beats only sounds for
+  four beats if its WAV is audible that long. Onsets and pitch were both correct
+  while every held cadence note still went silent mid-slot — the two halves pass
+  in isolation and only fail together, which is what this test exists to catch.
 - `test/domain/acoustic/detector_on_bundled_samples_test.dart` — runs the real
   `PitchDetector` over the real note samples, the only place those two meet. A
   richer timbre can fool an NSDF detector into a sub-octave error even while
