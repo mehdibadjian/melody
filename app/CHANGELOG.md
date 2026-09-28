@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.1](https://github.com/mehdibadjian/melody/compare/v1.9.0...v1.9.1) (2026-09-28)
+
+
+### Bug Fixes
+
+* real piano samples and authored rhythms so demos sound like the songs ([#50](https://github.com/mehdibadjian/melody/issues/50)) ([dfd8456](https://github.com/mehdibadjian/melody/commit/dfd84569ab9e4a67bc4952ff1aae518ce4f05967))
+
 ## [1.9.0](https://github.com/mehdibadjian/melody/compare/v1.8.1...v1.9.0) (2026-09-27)
 
 
