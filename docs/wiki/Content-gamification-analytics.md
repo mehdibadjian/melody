@@ -108,7 +108,7 @@ default, so documents round-trip unchanged.
 12 lessons, 14 levels — all single-level except *GOLDEN*, which ships three
 arrangements — across 7 genres (nursery, folk, classical, hymn, spiritual,
 holiday, pop). Difficulty: 9 beginner, 2 intermediate, 1 advanced. Levels run
-6–85 notes, 80–120 bpm, thresholds 0.70–0.80, payouts 3★+5n to 8★+12n. Eleven
+15–85 notes, 80–120 bpm, thresholds 0.70–0.80, payouts 3★+5n to 8★+12n. Eleven
 of the levels carry an authored `durations` rhythm; the three GOLDEN
 arrangements deliberately do not.
 
