@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/mehdibadjian/melody/compare/v1.9.2...v1.10.0) (2026-10-04)
+
+
+### Features
+
+* **content:** extend public-domain songs to complete melodies ([#54](https://github.com/mehdibadjian/melody/issues/54)) ([b2f05e6](https://github.com/mehdibadjian/melody/commit/b2f05e68287e0ed4815efaec5b91168e4127b219))
+
 ## [1.9.2](https://github.com/mehdibadjian/melody/compare/v1.9.1...v1.9.2) (2026-09-28)
 
 
