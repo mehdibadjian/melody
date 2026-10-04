@@ -216,4 +216,36 @@ void main() {
       }
     }
   });
+
+  test('every public-domain song is authored as a full melody, not a fragment',
+      () {
+    const minNoteCounts = {
+      'song-hot-cross-buns': 16,
+      'song-mary-lamb': 20,
+      'song-twinkle': 40,
+      'song-au-clair': 30,
+      'song-frere-jacques': 30,
+      'song-london-bridge': 20,
+      'song-jingle-bells': 40,
+      'song-ode-to-joy': 30,
+      'song-when-saints': 25,
+      'song-amazing-grace': 20,
+    };
+
+    for (final lesson in doc.lessons) {
+      final expectedMin = minNoteCounts[lesson.id];
+      if (expectedMin == null) continue;
+      for (final level in lesson.levels) {
+        expect(level.requiredNotes.length, greaterThanOrEqualTo(expectedMin),
+            reason:
+                '${lesson.id} (${level.id}) has only ${level.requiredNotes.length} notes; expected full melody (>= $expectedMin)');
+        expect(level.name.toLowerCase(), isNot(contains('first phrase')),
+            reason: '${level.id} is still named as an excerpt');
+        expect(level.name.toLowerCase(), isNot(contains('first line')),
+            reason: '${level.id} is still named as an excerpt');
+        expect(level.name.toLowerCase(), isNot(contains('opening phrase')),
+            reason: '${level.id} is still named as an excerpt');
+      }
+    }
+  });
 }
